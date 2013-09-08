@@ -111,6 +111,8 @@ class _AlignTaskPanel:
         MachDistMoveTools.moveHome(self.obj)
         MachDistMoveTools.minimizeBoundVolume(self.obj)
         MachDistMoveTools.moveHome(self.obj)
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+        FreeCADGui.activeDocument().activeView().viewAxometric()
 
 
         # make the first alignment persistent
