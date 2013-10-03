@@ -56,6 +56,7 @@
 #include <Mod/Raytracing/App/RayFeature.h>
 #include <Mod/Raytracing/App/RaySegment.h>
 #include <Mod/Raytracing/App/RayProject.h>
+#include <Mod/Raytracing/App/LuxProject.h>
 #include <Mod/Part/App/PartFeature.h>
   
 #include "FreeCADpov.h"
@@ -355,7 +356,7 @@ CmdRaytracingNewPartSegment::CmdRaytracingNewPartSegment()
     sAppModule      = "Raytracing";
     sGroup          = QT_TR_NOOP("Raytracing");
     sMenuText       = QT_TR_NOOP("Insert part");
-    sToolTipText    = QT_TR_NOOP("Insert a new part object into a Povray project");
+    sToolTipText    = QT_TR_NOOP("Insert a new part object into a Raytracing project");
     sWhatsThis      = "Raytracing_NewPartSegment";
     sStatusTip      = sToolTipText;
     sPixmap         = "Raytrace_NewPartSegment";
@@ -372,30 +373,43 @@ void CmdRaytracingNewPartSegment::activated(int iMsg)
 
     std::vector<App::DocumentObject*> pages = App::GetApplication().getActiveDocument()
         ->getObjectsOfType(Raytracing::RayProject::getClassTypeId());
+    std::vector<App::DocumentObject*> pages2 = App::GetApplication().getActiveDocument()
+        ->getObjectsOfType(Raytracing::LuxProject::getClassTypeId());
+    pages.insert(pages.end(),pages2.begin(),pages2.end());
     if (pages.empty()) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Povray project to insert"),
-            QObject::tr("Create a Povray project to insert a view."));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Raytracing project to insert"),
+            QObject::tr("Create a Raytracing project to insert a view."));
         return;
     }
 
     std::string ProjName;
     if (pages.size() > 1) {
+        // priority to the elders, if there is a pov project in the selection, it is used first!
         pages = Gui::Selection().getObjectsOfType(Raytracing::RayProject::getClassTypeId());
         if (pages.size() != 1) {
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Povray project to insert"),
-                QObject::tr("Select a Povray project to insert the view."));
-            return;
+            pages = Gui::Selection().getObjectsOfType(Raytracing::LuxProject::getClassTypeId());
+            if (pages.size() != 1) {
+                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Raytracing project to insert"),
+                    QObject::tr("Select a Raytracing project to insert the view."));
+                return;
+            }
         }
     }
 
     ProjName = pages.front()->getNameInDocument();
+    const char *FeatType;
+    if (pages.front()->getTypeId().isDerivedFrom(Raytracing::RayProject::getClassTypeId())) {
+        FeatType = "RayFeature";
+    } else {
+        FeatType = "LuxFeature";
+    }
 
     openCommand("Create view");
     for (std::vector<Part::Feature*>::iterator it = parts.begin(); it != parts.end(); ++it) {
         std::string FeatName = (*it)->getNameInDocument();
         FeatName += "_View";
         FeatName = getUniqueObjectName(FeatName.c_str());
-        doCommand(Doc,"App.activeDocument().addObject('Raytracing::RayFeature','%s')",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().addObject('Raytracing::%s','%s')",FeatType,FeatName.c_str());
         doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",FeatName.c_str(),(*it)->getNameInDocument());
         doCommand(Doc,"App.activeDocument().%s.Color = Gui.activeDocument().%s.ShapeColor",FeatName.c_str(),(*it)->getNameInDocument());
         doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",ProjName.c_str(), FeatName.c_str());
@@ -424,7 +438,7 @@ CmdRaytracingExportProject::CmdRaytracingExportProject()
     // seting the
     sGroup        = QT_TR_NOOP("File");
     sMenuText     = QT_TR_NOOP("&Export project...");
-    sToolTipText  = QT_TR_NOOP("Export the Povray project file");
+    sToolTipText  = QT_TR_NOOP("Export a Raytracing project to a file");
     sWhatsThis    = "Raytracing_ExportProject";
     sStatusTip    = sToolTipText;
     sPixmap       = "Raytrace_ExportProject";
@@ -432,15 +446,23 @@ CmdRaytracingExportProject::CmdRaytracingExportProject()
 
 void CmdRaytracingExportProject::activated(int iMsg)
 {
+    const char *filterLabel;
     unsigned int n = getSelection().countObjectsOfType(Raytracing::RayProject::getClassTypeId());
     if (n != 1) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
-            QObject::tr("Select one Povray project object."));
-        return;
+        n = getSelection().countObjectsOfType(Raytracing::LuxProject::getClassTypeId());
+        if (n != 1) {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+                QObject::tr("Select one Raytracing project object."));
+            return;
+        } else {
+            filterLabel = "Luxrender Scene (*.lxs)";
+        }
+    } else {
+        filterLabel = "Povray Scene (*.pov)";
     }
 
     QStringList filter;
-    filter << QObject::tr("Povray(*.pov)");
+    filter << QObject::tr(filterLabel);
     filter << QObject::tr("All Files (*.*)");
 
     QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page"), QString(), filter.join(QLatin1String(";;")));
@@ -464,6 +486,227 @@ bool CmdRaytracingExportProject::isActive(void)
 }
 
 
+//===========================================================================
+// Raytracing_Render
+//===========================================================================
+
+DEF_STD_CMD_A(CmdRaytracingRender);
+
+CmdRaytracingRender::CmdRaytracingRender()
+  : Command("Raytracing_Render")
+{
+    sGroup        = QT_TR_NOOP("File");
+    sMenuText     = QT_TR_NOOP("&Render");
+    sToolTipText  = QT_TR_NOOP("Renders the current raytracing project with an external renderer");
+    sWhatsThis    = "Raytracing_Render";
+    sStatusTip    = sToolTipText;
+    sPixmap       = "Raytrace_Render";
+}
+
+void CmdRaytracingRender::activated(int iMsg)
+{
+    // determining render type
+    const char* renderType;
+    unsigned int n1 = getSelection().countObjectsOfType(Raytracing::RayProject::getClassTypeId());
+    if (n1 != 1) {
+        unsigned int n2 = getSelection().countObjectsOfType(Raytracing::LuxProject::getClassTypeId());
+        if (n2 != 1) {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+                QObject::tr("Select one Raytracing project object."));
+            return;
+        } else {
+            renderType = "luxrender";
+        }
+    } else {
+        renderType = "povray";
+    }
+    
+    // checking if renderer is present
+    ParameterGrp::handle hGrp = App::GetApplication().GetParameterGroupByPath("User parameter:BaseApp/Preferences/Mod/Raytracing");
+    std::string renderer;
+    if (renderType == "povray") {
+        renderer = hGrp->GetASCII("PovrayExecutable", "");
+        if (renderer == "") {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Povray not found"),
+                QObject::tr("Please set the path to the povray executable in the preferences."));
+            return;
+        } else {
+            QFileInfo fi(QString::fromUtf8(renderer.c_str()));
+            if (!fi.exists() || !fi.isFile()) {
+                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Povray not found"),
+                    QObject::tr("Please correct the path to the povray executable in the preferences."));
+                return;
+            }
+        }
+    } else {
+        renderer = hGrp->GetASCII("LuxrenderExecutable", "");
+        if (renderer == "") {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Luxrender not found"),
+                QObject::tr("Please set the path to the luxrender or luxconsole executable in the preferences."));
+            return;
+        } else {
+            QFileInfo fi(QString::fromUtf8(renderer.c_str()));
+            if (!fi.exists() || !fi.isFile()) {
+                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Luxrender not found"),
+                    QObject::tr("Please correct the path to the luxrender or luxconsole executable in the preferences."));
+                return;
+            }
+        }
+    }
+    
+    std::vector<Gui::SelectionSingleton::SelObj> Sel = getSelection().getSelection();
+    
+    if (renderType == "povray") {
+        QStringList filter;
+        filter << QObject::tr("Rendered image(*.png)");
+        filter << QObject::tr("All Files (*.*)");
+        QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Rendered image"), QString(), filter.join(QLatin1String(";;")));
+        if (!fn.isEmpty()) {
+            std::string fname = (const char*)fn.toUtf8();
+            openCommand("Render project");
+            int width = hGrp->GetInt("OutputWidth", 800);
+            std::stringstream w;
+            w << width;
+            int height = hGrp->GetInt("OutputHeight", 600);
+            std::stringstream h;
+            h << height;
+            std::string par = hGrp->GetASCII("OutputParameters", "+P +A");
+            doCommand(Doc,"PageFile = open(App.activeDocument().%s.PageResult,'r')",Sel[0].FeatName);
+            doCommand(Doc,"import subprocess,tempfile");
+            doCommand(Doc,"TempFile = tempfile.mkstemp(suffix='.pov')[1]");
+            doCommand(Doc,"f = open(TempFile,'wb')");
+            doCommand(Doc,"f.write(PageFile.read())");
+            doCommand(Doc,"f.close()");
+            doCommand(Doc,"subprocess.call('\"%s\" %s +W%s +H%s +O\"%s\" '+TempFile,shell=True)",renderer.c_str(),par.c_str(),w.str().c_str(),h.str().c_str(),fname.c_str());
+            doCommand(Gui,"import ImageGui");
+            doCommand(Gui,"ImageGui.open('%s')",fname.c_str());
+            doCommand(Doc,"del TempFile,PageFile");
+            commitCommand();
+        }
+    } else {
+        openCommand("Render project");
+        doCommand(Doc,"PageFile = open(App.activeDocument().%s.PageResult,'r')",Sel[0].FeatName);
+        doCommand(Doc,"import subprocess,tempfile");
+        doCommand(Doc,"TempFile = tempfile.mkstemp(suffix='.lxs')[1]");
+        doCommand(Doc,"f = open(TempFile,'wb')");
+        doCommand(Doc,"f.write(PageFile.read())");
+        doCommand(Doc,"f.close()");
+        doCommand(Doc,"subprocess.call('\"%s\" '+TempFile,shell=True)",renderer.c_str());
+        doCommand(Doc,"del TempFile,PageFile");            
+        commitCommand();
+    }
+}
+
+bool CmdRaytracingRender::isActive(void)
+{
+    return (getActiveGuiDocument() ? true : false);
+}
+
+//===========================================================================
+// Raytracing_NewLuxProject
+//===========================================================================
+
+DEF_STD_CMD_A(CmdRaytracingNewLuxProject);
+
+CmdRaytracingNewLuxProject::CmdRaytracingNewLuxProject()
+  : Command("Raytracing_NewLuxProject")
+{
+    sAppModule      = "Raytracing";
+    sGroup          = QT_TR_NOOP("Raytracing");
+    sMenuText       = QT_TR_NOOP("New Luxrender project");
+    sToolTipText    = QT_TR_NOOP("Insert new Luxrender project into the document");
+    sWhatsThis      = "Raytracing_NewLuxrenderProject";
+    sStatusTip      = sToolTipText;
+    sPixmap         = "Raytrace_Lux";
+}
+
+void CmdRaytracingNewLuxProject::activated(int iMsg)
+{
+    const char* ppReturn=0;
+    Gui::Application::Instance->sendMsgToActiveView("GetCamera",&ppReturn);
+    if (ppReturn) {
+        std::string str(ppReturn);
+        if (str.find("PerspectiveCamera") == std::string::npos) {
+            int ret = QMessageBox::warning(Gui::getMainWindow(), 
+                qApp->translate("CmdRaytracingWriteView","No perspective camera"),
+                qApp->translate("CmdRaytracingWriteView","The current view camera is not perspective"
+                                " and thus the result of the luxrender image later might look different to"
+                                " what you expect.\nDo you want to continue?"),
+                QMessageBox::Yes|QMessageBox::No);
+            if (ret != QMessageBox::Yes)
+                return;
+        }
+    }
+
+    std::string FeatName = getUniqueObjectName("LuxProject");
+
+    openCommand("Raytracing create luxrender project");
+    doCommand(Doc,"import Raytracing,RaytracingGui");
+    doCommand(Doc,"App.activeDocument().addObject('Raytracing::LuxProject','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Template = App.getResourceDir()+'Mod/Raytracing/Templates/LuxClassic.lxs'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Camera = RaytracingGui.luxViewCamera()",FeatName.c_str());
+    commitCommand();
+}
+
+bool CmdRaytracingNewLuxProject::isActive(void)
+{
+    if (getActiveGuiDocument())
+        return true;
+    else
+        return false;
+}
+
+//===========================================================================
+// Raytracing_ResetCamera
+//===========================================================================
+
+DEF_STD_CMD_A(CmdRaytracingResetCamera);
+
+CmdRaytracingResetCamera::CmdRaytracingResetCamera()
+  : Command("Raytracing_ResetCamera")
+{
+    // seting the
+    sGroup        = QT_TR_NOOP("File");
+    sMenuText     = QT_TR_NOOP("&Reset Camera");
+    sToolTipText  = QT_TR_NOOP("Sets the camera of the selected Raytracing project to match the current view");
+    sWhatsThis    = "Raytracing_ResetCamera";
+    sStatusTip    = sToolTipText;
+    sPixmap       = "Raytrace_ResetCamera";
+}
+
+void CmdRaytracingResetCamera::activated(int iMsg)
+{
+    std::vector<Gui::SelectionSingleton::SelObj> Sel = getSelection().getSelection();
+    unsigned int n = getSelection().countObjectsOfType(Raytracing::RayProject::getClassTypeId());
+    if (n != 1) {
+        n = getSelection().countObjectsOfType(Raytracing::LuxProject::getClassTypeId());
+        if (n != 1) {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+                QObject::tr("Select one Raytracing project object."));
+            return;
+        } else {
+            //luxrender
+            openCommand("Reset Raytracing Camera");
+            doCommand(Doc,"import RaytracingGui");
+            doCommand(Doc,"App.activeDocument().%s.Camera = RaytracingGui.luxViewCamera()",Sel[0].FeatName);
+            commitCommand();
+            doCommand(Doc,"App.activeDocument().recompute()");
+        }
+    } else {
+        //povray
+        openCommand("Reset Raytracing Camera");
+        doCommand(Doc,"import RaytracingGui");
+        doCommand(Doc,"App.activeDocument().%s.Camera = RaytracingGui.povViewCamera()",Sel[0].FeatName);
+        commitCommand();
+        doCommand(Doc,"App.activeDocument().recompute()");
+    }
+}
+
+bool CmdRaytracingResetCamera::isActive(void)
+{
+    return (getActiveGuiDocument() ? true : false);
+}
+
 void CreateRaytracingCommands(void)
 {
     Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
@@ -473,4 +716,7 @@ void CreateRaytracingCommands(void)
     rcCmdMgr.addCommand(new CmdRaytracingNewPovrayProject());
     rcCmdMgr.addCommand(new CmdRaytracingExportProject());
     rcCmdMgr.addCommand(new CmdRaytracingNewPartSegment());
+    rcCmdMgr.addCommand(new CmdRaytracingRender());
+    rcCmdMgr.addCommand(new CmdRaytracingNewLuxProject());
+    rcCmdMgr.addCommand(new CmdRaytracingResetCamera());
 }

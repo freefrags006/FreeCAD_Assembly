@@ -23,7 +23,7 @@
 
 __title__="FreeCAD Draft Workbench GUI Tools"
 __author__ = "Yorik van Havre, Werner Mayer, Martin Burbaum, Ken Cline, Dmitry Chigrin"
-__url__ = "http://free-cad.sourceforge.net"
+__url__ = "http://www.freecadweb.org"
 
 #---------------------------------------------------------------------------
 # Generic stuff
@@ -2506,6 +2506,8 @@ class Trimex(Modifier):
         self.obj = Draft.getSelection()[0]
         self.ui.trimUi()
         self.linetrack = lineTracker()
+        
+        import DraftGeomUtils
 
         if not "Shape" in self.obj.PropertiesList: return
         if "Placement" in self.obj.PropertiesList:
@@ -2542,7 +2544,6 @@ class Trimex(Modifier):
             lc = self.obj.ViewObject.LineColor
             sc = (lc[0],lc[1],lc[2])
             sw = self.obj.ViewObject.LineWidth
-            import DraftGeomUtils
             for e in self.edges:
                 if DraftGeomUtils.geomType(e) == "Line":
                     self.ghost.append(lineTracker(scolor=sc,swidth=sw))
@@ -2615,6 +2616,8 @@ class Trimex(Modifier):
         reverse = False
         for g in self.ghost: g.off()
         if real: newedges = []
+        
+        import DraftGeomUtils
         
         # finding the active point
         vlist = []
@@ -3897,6 +3900,16 @@ class Draft_Snap_Ortho():
                 for b in FreeCADGui.Snapper.toolbarButtons:
                     if b.objectName() == "SnapButtonortho":
                         b.toggle()
+                        
+class Draft_Snap_Dimensions():
+    def GetResources(self):
+        return {'Pixmap'  : 'Snap_Dimensions',
+                'MenuText': QtCore.QT_TRANSLATE_NOOP("Draft_Snap_Dimensions", "Dimensions"),
+                'ToolTip' : QtCore.QT_TRANSLATE_NOOP("Draft_Snap_Ortho", "Shows temporary dimensions when snapping to Arch objects")}
+    def Activated(self):
+        if hasattr(FreeCADGui,"Snapper"):
+            if hasattr(FreeCADGui.Snapper,"dimbutton"):
+                FreeCADGui.Snapper.dimbutton.toggle()
 
 #---------------------------------------------------------------------------
 # Adds the icons & commands to the FreeCAD command manager, and sets defaults
@@ -3962,6 +3975,7 @@ FreeCADGui.addCommand('Draft_Snap_Center',Draft_Snap_Center())
 FreeCADGui.addCommand('Draft_Snap_Extension',Draft_Snap_Extension())
 FreeCADGui.addCommand('Draft_Snap_Near',Draft_Snap_Near())
 FreeCADGui.addCommand('Draft_Snap_Ortho',Draft_Snap_Ortho())
+FreeCADGui.addCommand('Draft_Snap_Dimensions',Draft_Snap_Dimensions())
 
 # a global place to look for active draft Command
 FreeCAD.activeDraftCommand = None

@@ -23,7 +23,7 @@
 
 __title__="FreeCAD Draft Workbench - GUI part"
 __author__ = "Yorik van Havre <yorik@uncreated.net>"
-__url__ = ["http://free-cad.sourceforge.net"]
+__url__ = ["http://www.freecadweb.org"]
 
 '''
 This is the GUI part of the Draft module.
@@ -253,7 +253,7 @@ class DraftToolBar:
     def _spinbox (self,name, layout, val=None, vmax=None, hide=True, double=False, size=None):
         if double:
             sbox = QtGui.QDoubleSpinBox(self.baseWidget)
-            sbox.setDecimals(2)
+            sbox.setDecimals(FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units").GetInt("Decimals",2))
         else:
             sbox = QtGui.QSpinBox(self.baseWidget)
         sbox.setObjectName(name)
@@ -1139,7 +1139,10 @@ class DraftToolBar:
             self.displayPoint()
         elif txt.endsWith("z"):
             self.constrain("z")
-            self.displayPoint()    
+            self.displayPoint()
+        elif txt.endsWith("l"):
+            self.constrain("angle")
+            self.displayPoint()
         elif txt.endsWith("c"):
             if self.closeButton.isVisible():
                 self.closeLine()
@@ -1211,21 +1214,22 @@ class DraftToolBar:
                     dp = plane.getLocalCoords(point)
 
             # set widgets
+            ds = "%." + str(FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units").GetInt("Decimals",2)) + "f"
             if self.mask in ['y','z']:
-                self.xValue.setText("0.00")
+                self.xValue.setText(ds % 0)
             else:
                 if dp:
-                    self.xValue.setText("%.2f" % dp.x)
+                    self.xValue.setText(ds % dp.x)
             if self.mask in ['x','z']:
-                self.yValue.setText("0.00")
+                self.yValue.setText(ds % 0)
             else:
                 if dp:
-                    self.yValue.setText("%.2f" % dp.y)
+                    self.yValue.setText(ds % dp.y)
             if self.mask in ['x','y']:
-                self.zValue.setText("0.00")
+                self.zValue.setText(ds % 0)
             else:
                 if dp:
-                    self.zValue.setText("%.2f" % dp.z)
+                    self.zValue.setText(ds % dp.z)
 
             # set masks
             if (mask == "x") or (self.mask == "x"):
@@ -1362,7 +1366,9 @@ class DraftToolBar:
             FreeCADGui.Snapper.showradius()
 
     def constrain(self,val):
-        if self.mask == val:
+        if val == "angle":
+            FreeCADGui.Snapper.setAngle()
+        elif self.mask == val:
             self.mask = None
             if hasattr(FreeCADGui,"Snapper"):
                 FreeCADGui.Snapper.mask = None

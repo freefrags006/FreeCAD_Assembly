@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2004 Jrgen Riegel <juergen.riegel@web.de>              *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -653,6 +653,7 @@ void Document::RestoreDocFile(Base::Reader &reader)
 {
     // We must create an XML parser to read from the input stream
     Base::XMLReader xmlReader("GuiDocument.xml", reader);
+    xmlReader.FileVersion = reader.getFileVersion();
 
     int i,Cnt;
 
@@ -680,7 +681,7 @@ void Document::RestoreDocFile(Base::Reader &reader)
             ViewProvider* pObj = getViewProviderByName(name.c_str());
             if (pObj) // check if this feature has been registered
                 pObj->Restore(xmlReader);
-            if (expanded) {
+            if (pObj && expanded) {
                 Gui::ViewProviderDocumentObject* vp = static_cast<Gui::ViewProviderDocumentObject*>(pObj);
                 this->signalExpandObject(*vp, Gui::Expand);
             }
@@ -708,7 +709,7 @@ void Document::RestoreDocFile(Base::Reader &reader)
 
     // In the file GuiDocument.xml new data files might be added
     if (!xmlReader.getFilenames().empty())
-        xmlReader.readFiles(static_cast<zipios::ZipInputStream&>(reader));
+        xmlReader.readFiles(static_cast<zipios::ZipInputStream&>(reader.getStream()));
 
     // reset modified flag
     setModified(false);
@@ -751,7 +752,7 @@ void Document::SaveDocFile (Base::Writer &writer) const
 {
     writer.Stream() << "<?xml version='1.0' encoding='utf-8'?>" << std::endl
                     << "<!--" << std::endl
-                    << " FreeCAD Document, see http://free-cad.sourceforge.net for more information..."
+                    << " FreeCAD Document, see http://www.freecadweb.org for more information..."
                     << std::endl << "-->" << std::endl;
 
     writer.Stream() << "<Document SchemaVersion=\"1\">" << std::endl;

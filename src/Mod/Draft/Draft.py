@@ -27,7 +27,7 @@ from __future__ import division
 
 __title__="FreeCAD Draft Workbench"
 __author__ = "Yorik van Havre, Werner Mayer, Martin Burbaum, Ken Cline, Dmitry Chigrin, Daniel Falck"
-__url__ = "http://free-cad.sourceforge.net"
+__url__ = "http://www.freecadweb.org"
 
 '''
 General description:
@@ -39,7 +39,7 @@ General description:
 
 User manual:
 
-    http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=2d_Drafting_Module
+    http://www.freecadweb.org/wiki/index.php?title=2d_Drafting_Module
 
 How it works / how to extend:
 
@@ -109,7 +109,7 @@ def getParamType(param):
         return "float"
     elif param in ["selectBaseObjects","alwaysSnap","grid","fillmode","saveonexit","maxSnap",
                    "SvgLinesBlack","dxfStdSize","showSnapBar","hideSnapBar","alwaysShowGrid",
-                   "renderPolylineWidth","showPlaneTracker","UsePartPrimitives"]:
+                   "renderPolylineWidth","showPlaneTracker","UsePartPrimitives","DiscretizeEllipses"]:
         return "bool"
     elif param in ["color","constructioncolor","snapcolor"]:
         return "unsigned"
@@ -2530,8 +2530,9 @@ class _ViewProviderDraft:
                         if vobj.TextureImage:
                             path = vobj.TextureImage
                     if not path:
-                        if str(vobj.Pattern) in svgpatterns().keys():
-                            path = svgpatterns()[vobj.Pattern][1]
+                        if hasattr(vobj,"Pattern"):
+                            if str(vobj.Pattern) in svgpatterns().keys():
+                                path = svgpatterns()[vobj.Pattern][1]
                     if path:
                         r = vobj.RootNode.getChild(2).getChild(0).getChild(2)
                         i = QtCore.QFileInfo(path)
@@ -3313,7 +3314,7 @@ class _Wire(_DraftObject):
                     fp.Points = pts
         elif prop == "End":
             pts = fp.Points
-            invpl = fp.Placement.inverse()
+            invpl = FreeCAD.Placement(fp.Placement).inverse()
             realfpend = invpl.multVec(fp.End)
             if len(pts) > 1:
                 if pts[-1] != realfpend:

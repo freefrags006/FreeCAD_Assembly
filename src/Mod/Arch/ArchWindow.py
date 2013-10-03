@@ -28,7 +28,7 @@ from DraftTools import translate
 
 __title__="FreeCAD Wall"
 __author__ = "Yorik van Havre"
-__url__ = "http://free-cad.sourceforge.net"
+__url__ = "http://www.freecadweb.org"
 
 WindowPartTypes = ["Frame","Solid panel","Glass panel"]
 
@@ -124,7 +124,6 @@ class _Window(ArchComponent.Component):
         self.createGeometry(obj)
         
     def onChanged(self,obj,prop):
-        print prop
         self.hideSubobjects(obj,prop)
         if prop in ["Base","WindowParts"]:
             self.createGeometry(obj)
