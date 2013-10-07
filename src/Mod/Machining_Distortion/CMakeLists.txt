@@ -16,14 +16,18 @@ SET(MachDist_SRCS
 	User_Interface_Mach_Dist.py
 	machdist_rc.py
 	MachDistMaterial.py
+	MachDistMaterialFit.py
 	MachDistMesh.py
 	MachDistAnalysis.py
 	MachDistIsostatic.py
+	MachDistGround.py
 	MachDistAlignment.py
 	MachDistMoveTools.py
     Parameter.ui
     Material.ui
+    MaterialFit.ui
     Aligment.ui
+    Ground.ui
     JobControl.ui
     Isostatic.ui
 )

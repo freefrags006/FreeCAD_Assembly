@@ -158,12 +158,13 @@ class MachiningDistortionWorkbench ( Workbench ):
         import MachDistMesh
         import MachDistAnalysis
         import MachDistMaterial
+        import MachDistMaterialFit
         import MachDistAlignment
         import MachDistIsostatic
         CmdList = ["MachiningDistortion_StartGUI","MachiningDistortion_StartPostprocess"]
         self.appendToolbar("MachiningDistortionTools",CmdList)
         self.appendMenu("Machining Distortion",CmdList)
-        CmdList2 = ["MachDist_Analysis","Separator","MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_Isostatic","Separator","MachDist_JobControl"]
+        CmdList2 = ["MachDist_Analysis","Separator","MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_MaterialFit","MachDist_Isostatic","Separator","MachDist_JobControl"]
         self.appendToolbar("MachiningDistortionTools2",CmdList2)
         self.appendMenu("Machining Distortion2",CmdList2)
         
