@@ -266,7 +266,10 @@ class _MaterialFitTaskPanel:
         self.formUi.comboBox_MaterialsInDir.addItem('-> choose Material')
         for i in self.pathList:
             self.formUi.comboBox_MaterialsInDir.addItem(os.path.basename(i) )
-        
+    
+    def checkChanged(self,index):
+        print "change"
+    
     def add_fit_data(self):
         l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','LT file (*.csv)')
         
@@ -288,6 +291,11 @@ class _MaterialFitTaskPanel:
                 self.formUi.tableWidget.setItem(0,1,item)
                 item = QtGui.QTableWidgetItem(row[2])
                 self.formUi.tableWidget.setItem(0,2,item)
+                item = QtGui.QCheckBox()
+                item.setChecked(2)
+                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
+                self.formUi.tableWidget.setCellWidget(0,3,item)
+                
             if row[0] == '1' :
                 xval = float(row[1])
                 yval = float(row[2])
@@ -295,7 +303,7 @@ class _MaterialFitTaskPanel:
                 x.append(xval)
                 y.append(yval)
 
-        print x,y
+        self.formUi.tableWidget.resizeColumnsToContents()
         
         polval = polyfit(x, y, 6)
 
