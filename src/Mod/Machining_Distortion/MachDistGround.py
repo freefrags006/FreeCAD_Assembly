@@ -20,7 +20,7 @@
 #*                                                                         *
 #***************************************************************************
 
-import FreeCAD, Fem, Mesh
+import FreeCAD, Fem, Mesh, MachDistIsostatic
 
 if FreeCAD.GuiUp:
     import FreeCADGui,FemGui
@@ -29,70 +29,43 @@ if FreeCAD.GuiUp:
     from pivy import coin
     import PyQt4.uic as uic
 
-__title__="Machine-Distortion Isostatic managment"
+__title__="Machine-Distortion Ground managment"
 __author__ = "Juergen Riegel"
 __url__ = "http://free-cad.sourceforge.net"
 
 
 
 
-def getBoundaryCoditions(Mesh):
-    BndBox = Mesh.BoundBox
-    FirstLength = 10000.0
-    FirstIndex  = -1
-    SecondLength = 10000.0
-    SecondIndex  = -1
-    ThirdLength = 10000.0
-    ThirdIndex  = -1
-    
-    for id,i in Mesh.Nodes.items():
-        l = (i-FreeCAD.Vector(BndBox.XMin,BndBox.YMin,BndBox.ZMin)).Length
-        if FirstLength > l:
-            FirstLength = l
-            FirstIndex = id
-            
-        l = (i-FreeCAD.Vector(BndBox.XMax,BndBox.YMin,BndBox.ZMin)).Length
-        if SecondLength > l:
-            SecondLength = l
-            SecondIndex = id
-            
-        l = (i-FreeCAD.Vector(BndBox.XMin,BndBox.YMax,BndBox.ZMin)).Length
-        if ThirdLength > l:
-            ThirdLength = l
-            ThirdIndex = id
 
-        
-    print FirstIndex,SecondIndex,ThirdIndex
-    return (FirstIndex,SecondIndex,ThirdIndex)
 
-def makeIsostatic(name):
+def makeGround(name):
     '''makeMaterial(name): makes an Material
     name there fore is a material name or an file name for a FCMat file'''
     obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython",name)
-    _IsostaticNodes(obj)
-    _ViewProviderIsostaticNodes(obj.ViewObject)
+    _GroundNodes(obj)
+    _ViewProviderGroundNodes(obj.ViewObject)
     #FreeCAD.ActiveDocument.recompute()
     return obj
 
 
-class _CommandIsostatic:
-    "the MachDist Isostatic command definition"
+class _CommandGround:
+    "the MachDist Ground command definition"
     def GetResources(self):
         return {'Pixmap'  : 'MachDist_Isostatic',
-                'MenuText': QtCore.QT_TRANSLATE_NOOP("MachDist_Isostatic","Machine-Distortion Isostatic"),
+                'MenuText': QtCore.QT_TRANSLATE_NOOP("MachDist_Ground","Machine-Distortion Ground"),
                 'Accel': "A",
-                'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Isostatic","Add or edit a Machine-Distortion Isostatic")}
+                'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Ground","Add or edit a Machine-Distortion Ground")}
         
     def Activated(self):
         
-        FreeCAD.ActiveDocument.openTransaction("Isostatic")
+        FreeCAD.ActiveDocument.openTransaction("Ground")
 
         obj = None
         FemMeshObj = None
         if FemGui.getActiveAnalysis():
             for i in FemGui.getActiveAnalysis().Member:
                 if i.isDerivedFrom("App::FeaturePython"):
-                    if i.Proxy.Type == 'MachDist_IsostaticNodes':
+                    if i.Proxy.Type == 'MachDist_GroundNodes':
                         obj = i
                         break
         else: 
@@ -103,14 +76,14 @@ class _CommandIsostatic:
                 FemMeshObj = i
             
         if not obj:
-            FreeCADGui.addModule("MachDistIsostatic")
-            FreeCADGui.doCommand("MachDistIsostatic.makeIsostatic('IsostaticNodes')")
+            FreeCADGui.addModule("MachDistGround")
+            FreeCADGui.doCommand("MachDistGround.makeGround('GroundNodes')")
             obj = FreeCAD.activeDocument().ActiveObject
             FreeCADGui.doCommand("FemGui.getActiveAnalysis().Member = FemGui.getActiveAnalysis().Member + [App.activeDocument().ActiveObject]")
         
         #node_numbers = Fem.getBoundary_Conditions(FemMeshObj.FemMesh)
-        node_numbers = getBoundaryCoditions(FemMeshObj.FemMesh)
-        obj.IsostaticNodes = node_numbers
+        node_numbers = MachDistIsostatic.getBoundaryCoditions(FemMeshObj.FemMesh)
+        obj.GroundNodes = node_numbers
         
         nodes = FemMeshObj.FemMesh.Nodes
         meshObj = None
@@ -119,23 +92,45 @@ class _CommandIsostatic:
             if i.isDerivedFrom("Mesh::Feature"):
                 meshObj = i
                 break
-                    
+        
+        O = nodes[node_numbers[0]]
+        X = nodes[node_numbers[1]]
+        Y = nodes[node_numbers[2]]
+
+        # calculate the pricipel vectors
+        VX = X-O
+        VY = Y-O
+        VX2 = (X-O).multiply(3.0)
+        VY2 = (Y-O).multiply(3.0)
+
+        # calculate the normal of the plane
+        N = VX.cross(VY).normalize()
+        print 'Normal:',N
+        
+        zu = 100000.0
+        for i in nodes.values():
+            d = i.distanceToPlane(O,N)
+            if d < zu: zu = d
+        print zu
+        #create normal displacement vector
+        N.multiply(zu)
+        
         if not meshObj:
-            FreeCADGui.doCommand("App.activeDocument().addObject('Mesh::Feature','IsostaticPlane')")
+            FreeCADGui.doCommand("App.activeDocument().addObject('Mesh::Feature','GroundPlane')")
             meshObj = FreeCAD.activeDocument().ActiveObject
             meshObj.ViewObject.ShapeColor = (0.0, 1.0, 0.0, 0.0)
             FreeCADGui.doCommand("FemGui.getActiveAnalysis().Member = FemGui.getActiveAnalysis().Member + [App.activeDocument().ActiveObject]")
         
         planarMesh = [
             # triangle 1
-            nodes[node_numbers[0]],nodes[node_numbers[1]],nodes[node_numbers[2]],
+            O-VX-VY+N,X+VX2-VY+N,Y+VY2-VX+N,
             #triangle 2
             #[-0.5000,-0.5000,0.0000],[0.5000,-0.5000,0.0000],[0.5000,0.5000,0.0000],
             ]
         aMesh = Mesh.Mesh(planarMesh)
         meshObj.Mesh = aMesh
 
-        taskd = _IsostaticTaskPanel(obj,meshObj,FemMeshObj)
+        taskd = _GroundTaskPanel(obj,meshObj,FemMeshObj)
         
         FreeCADGui.Control.showDialog(taskd)
 
@@ -147,12 +142,12 @@ class _CommandIsostatic:
         else:
             return False
        
-class _IsostaticNodes:
-    "The IsostaticNodes object"
+class _GroundNodes:
+    "The GroundNodes object"
     def __init__(self,obj):
-        self.Type = "MachDist_IsostaticNodes"
+        self.Type = "MachDist_GroundNodes"
         obj.Proxy = self
-        obj.addProperty("App::PropertyIntegerList","IsostaticNodes","Base",
+        obj.addProperty("App::PropertyIntegerList","GroundNodes","Base",
                         "The isostatic node numbers")
 
         
@@ -160,7 +155,7 @@ class _IsostaticNodes:
         return
         
     def onChanged(self,obj,prop):
-        if prop in ["IsostaticNodes"]:
+        if prop in ["GroundNodes"]:
             return
 
     def __getstate__(self):
@@ -170,8 +165,8 @@ class _IsostaticNodes:
         if state:
             self.Type = state
         
-class _ViewProviderIsostaticNodes:
-    "A View Provider for the IsostaticNodes object"
+class _ViewProviderGroundNodes:
+    "A View Provider for the GroundNodes object"
 
     def __init__(self,vobj):
         #vobj.addProperty("App::PropertyLength","BubbleSize","Base", str(translate("MachDist","The size of the axis bubbles")))
@@ -179,7 +174,7 @@ class _ViewProviderIsostaticNodes:
        
     def getIcon(self):
         import machdist_rc
-        return ":/icons/MachDist_Isostatic.svg"
+        return ":/icons/MachDist_Ground.svg"
 
     def attach(self, vobj):
         self.ViewObject = vobj
@@ -198,7 +193,7 @@ class _ViewProviderIsostaticNodes:
         for i in FemGui.getActiveAnalysis().Member:
             if i.isDerivedFrom("Fem::FemMeshObject"):
                 FemMeshObj = i
-        taskd = _IsostaticTaskPanel(self.Object, None,FemMeshObj)
+        taskd = _GroundTaskPanel(self.Object, None,FemMeshObj)
         taskd.obj = vobj.Object
         taskd.update()
         FreeCADGui.Control.showDialog(taskd)
@@ -209,13 +204,13 @@ class _ViewProviderIsostaticNodes:
         return
 
  
-class _IsostaticTaskPanel:
+class _GroundTaskPanel:
     '''The editmode TaskPanel for Material objects'''
     def __init__(self,obj,meshObj,femMeshObj):
         # the panel has a tree widget that contains categories
         # for the subcomponents, such as additions, subtractions.
         # the categories are shown only if they are not empty.
-        form_class, base_class = uic.loadUiType(FreeCAD.getHomePath() + "Mod/Machining_Distortion/Isostatic.ui")
+        form_class, base_class = uic.loadUiType(FreeCAD.getHomePath() + "Mod/Machining_Distortion/Ground.ui")
 
         self.obj = obj
         self.meshObj = meshObj
@@ -227,7 +222,7 @@ class _IsostaticTaskPanel:
         
 
         #QtCore.QObject.connect(self.formUi.select_L_file, QtCore.SIGNAL("clicked()"), self.add_L_data)
-        self.femMeshObj.ViewObject.Transparency = 50
+        #self.femMeshObj.ViewObject.Transparency = 50
         self.meshObj.ViewObject.Visibility=True
         
         self.update()
@@ -238,9 +233,9 @@ class _IsostaticTaskPanel:
     
     def update(self):
         'fills the widgets'
-        OutStr = 'Isostatic Plane:\n'
+        OutStr = 'Ground Plane:\n'
         
-        IsoNodes = list(self.obj.IsostaticNodes)
+        IsoNodes = list(self.obj.GroundNodes)
         
         AllNodes = self.femMeshObj.FemMesh.Nodes
         GridNode1 = AllNodes[IsoNodes[0]]
@@ -257,18 +252,18 @@ class _IsostaticTaskPanel:
         return 
                 
     def accept(self):
-        self.femMeshObj.ViewObject.Transparency = 0
+        #self.femMeshObj.ViewObject.Transparency = 0
         self.meshObj.ViewObject.Visibility=False
         FreeCAD.ActiveDocument.commitTransaction()
         FreeCADGui.Control.closeDialog()
 
                     
     def reject(self):
-        self.femMeshObj.ViewObject.Transparency = 0
+        #self.femMeshObj.ViewObject.Transparency = 0
         self.meshObj.ViewObject.Visibility=False
         FreeCAD.ActiveDocument.abortTransaction()
         FreeCADGui.Control.closeDialog()
 
 
        
-FreeCADGui.addCommand('MachDist_Isostatic',_CommandIsostatic())
+FreeCADGui.addCommand('MachDist_Ground',_CommandGround())

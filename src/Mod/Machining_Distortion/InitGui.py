@@ -126,8 +126,8 @@ class MachiningDistortionWorkbench ( Workbench ):
 
         class WatcherFill:
             def __init__(self):
-                self.commands = ["MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_Isostatic"]
-                self.title = "Modify objects"
+                self.commands = ["MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_MaterialFit","MachDist_Isostatic","MachDist_Ground"]
+                self.title = "Modify analysis objects"
             def shouldShow(self):
                 import FemGui
                 return FemGui.getActiveAnalysis() != None
@@ -161,10 +161,12 @@ class MachiningDistortionWorkbench ( Workbench ):
         import MachDistMaterialFit
         import MachDistAlignment
         import MachDistIsostatic
+        import MachDistGround
+        
         CmdList = ["MachiningDistortion_StartGUI","MachiningDistortion_StartPostprocess"]
         self.appendToolbar("MachiningDistortionTools",CmdList)
         self.appendMenu("Machining Distortion",CmdList)
-        CmdList2 = ["MachDist_Analysis","Separator","MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_MaterialFit","MachDist_Isostatic","Separator","MachDist_JobControl"]
+        CmdList2 = ["MachDist_Analysis","Separator","MachDist_Mesh","MachDist_Alignment","MachDist_Material","MachDist_MaterialFit","MachDist_Isostatic","MachDist_Ground","Separator","MachDist_JobControl"]
         self.appendToolbar("MachiningDistortionTools2",CmdList2)
         self.appendMenu("Machining Distortion2",CmdList2)
         
