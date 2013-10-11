@@ -270,6 +270,8 @@ class _MaterialTaskPanel:
     
     def chooseMat(self,index):
         if index == 0:return 
+        if len(self.pathList) == 0:return
+
         import Material
         name = self.pathList[index-1]
         #print 'Import ', str(name)

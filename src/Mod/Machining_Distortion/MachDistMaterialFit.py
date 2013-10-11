@@ -69,7 +69,7 @@ def makeMaterialFit(name):
 class _CommandMaterialFit:
     "the MachDist Material command definition"
     def GetResources(self):
-        return {'Pixmap'  : 'MachDist_MaterialFit',
+        return {'Pixmap'  : 'MachDist_Material',
                 'MenuText': QtCore.QT_TRANSLATE_NOOP("MachDist_Material","Material"),
                 'Accel': "A, X",
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Material","Creates or edit the material definition.")}
@@ -249,6 +249,8 @@ class _MaterialFitTaskPanel:
     
     def chooseMat(self,index):
         if index == 0:return 
+        if len(self.pathList) == 0:return 
+        
         import Material
         name = self.pathList[index-1]
         #print 'Import ', str(name)
@@ -269,7 +271,31 @@ class _MaterialFitTaskPanel:
     
     def checkChanged(self,index):
         print "change"
+        self.updatePlot()
     
+    def updatePlot(self):
+        print "update plot" 
+        x = []
+        y = []
+
+        for i in range(self.formUi.tableWidget.rowCount () ):
+            if self.formUi.tableWidget.item(i,0).text() == '1':
+                if self.formUi.tableWidget.cellWidget(i,3).checkState() == 2:
+                    x.append(float (self.formUi.tableWidget.item(i,1).text()) )
+                    y.append(float (self.formUi.tableWidget.item(i,2).text()) )
+
+        polval = polyfit(x, y, 6)
+
+        newx = linspace(min(x), max(x), 100)
+
+        newy = []
+        for i in newx:
+            newy.append(i**6*polval[0]+i**5*polval[1]+i**4*polval[2]+i**3*polval[3]+i**2*polval[4]+i*polval[5]+polval[6])
+
+        #Plot.figure("Fit diagram")
+        Plot.plot(newx,newy)
+                
+            
     def add_fit_data(self):
         l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','LT file (*.csv)')
         
