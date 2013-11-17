@@ -241,11 +241,12 @@ App::DocumentObjectExecReturn *Loft::execute(void)
             if (shape.IsNull())
                 return new App::DocumentObjectExecReturn("Linked shape is invalid.");
             if (shape.ShapeType() == TopAbs_FACE) {
-	        TopoDS_Wire faceouterWire = ShapeAnalysis::OuterWire(TopoDS::Face(shape));
+                TopoDS_Wire faceouterWire = ShapeAnalysis::OuterWire(TopoDS::Face(shape));
                 profiles.Append(faceouterWire);
             }
             else if (shape.ShapeType() == TopAbs_WIRE) {
-                profiles.Append(shape);
+                BRepBuilderAPI_MakeWire mkWire(TopoDS::Wire(shape));
+                profiles.Append(mkWire.Wire());
             }
             else if (shape.ShapeType() == TopAbs_EDGE) {
                 BRepBuilderAPI_MakeWire mkWire(TopoDS::Edge(shape));
@@ -355,9 +356,9 @@ App::DocumentObjectExecReturn *Sweep::execute(void)
                 return new App::DocumentObjectExecReturn("Linked shape is invalid.");
             // There is a weird behaviour of BRepOffsetAPI_MakePipeShell when trying to add the wire as is.
             // If we re-create the wire then everything works fine.
-            // https://sourceforge.net/apps/phpbb/free-cad/viewtopic.php?f=10&t=2673&sid=fbcd2ff4589f0b2f79ed899b0b990648#p20268
+            // http://forum.freecadweb.org/viewtopic.php?f=10&t=2673&sid=fbcd2ff4589f0b2f79ed899b0b990648#p20268
             if (shape.ShapeType() == TopAbs_FACE) {
-	        TopoDS_Wire faceouterWire = ShapeAnalysis::OuterWire(TopoDS::Face(shape));
+                TopoDS_Wire faceouterWire = ShapeAnalysis::OuterWire(TopoDS::Face(shape));
                 profiles.Append(faceouterWire);
             }
             else if (shape.ShapeType() == TopAbs_WIRE) {

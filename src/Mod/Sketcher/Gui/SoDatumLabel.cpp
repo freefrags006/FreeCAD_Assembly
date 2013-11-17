@@ -94,6 +94,7 @@ SoDatumLabel::SoDatumLabel()
 
     this->imgWidth = 0;
     this->imgHeight = 0;
+    this->glimagevalid = false;
 }
 
 void SoDatumLabel::drawImage()
@@ -108,6 +109,7 @@ void SoDatumLabel::drawImage()
     QFont font(QString::fromAscii(name.getValue()), size.getValue());
     QFontMetrics fm(font);
     QString str = QString::fromUtf8(s[0].getString());
+
     int w = fm.width(str);
     int h = fm.height();
 
@@ -129,7 +131,7 @@ void SoDatumLabel::drawImage()
 
     painter.setPen(front);
     painter.setFont(font);
-    painter.drawText(0,0,w,h, Qt::AlignLeft , str);
+    painter.drawText(0, 0, w, h, Qt::AlignLeft, str);
     painter.end();
 
     Gui::BitmapFactory().convert(image, this->image);
@@ -388,6 +390,27 @@ void SoDatumLabel::generatePrimitives(SoAction * action)
 
 }
 
+void SoDatumLabel::notify(SoNotList * l)
+{
+    SoField * f = l->getLastField();
+    if (f == &this->string) {
+        this->glimagevalid = false;
+    }
+    else if (f == &this->textColor) {
+        this->glimagevalid = false;
+    }
+    else if (f == &this->name) {
+        this->glimagevalid = false;
+    }
+    else if (f == &this->size) {
+        this->glimagevalid = false;
+    }
+    else if (f == &this->image) {
+        this->glimagevalid = false;
+    }
+    inherited::notify(l);
+}
+
 void SoDatumLabel::GLRender(SoGLRenderAction * action)
 {
     SoState *state = action->getState();
@@ -407,8 +430,11 @@ void SoDatumLabel::GLRender(SoGLRenderAction * action)
     int nc;
     int srcw, srch;
 
-    if(hasText) {
-        drawImage();
+    if (hasText) {
+        if (!this->glimagevalid) {
+            drawImage();
+            this->glimagevalid = true;
+        }
 
         const unsigned char * dataptr = this->image.getValue(size, nc);
         if (dataptr == NULL) return; // no image
@@ -825,8 +851,7 @@ void SoDatumLabel::GLRender(SoGLRenderAction * action)
         this->bbox.setBounds(SbVec3f(minX, minY, 0.f), SbVec3f (maxX, maxY, 0.f));
     }
 
-    if(hasText) {
-
+    if (hasText) {
         const unsigned char * dataptr = this->image.getValue(size, nc);
 
         //Get the camera z-direction
@@ -834,29 +859,67 @@ void SoDatumLabel::GLRender(SoGLRenderAction * action)
 
         bool flip = norm.getValue().dot(z) > FLT_EPSILON;
 
+        static bool init = false;
+        static bool npot = false;
+        if (!init) {
+            init = true;
+            std::string ext = (const char*)(glGetString(GL_EXTENSIONS));
+            npot = (ext.find("GL_ARB_texture_non_power_of_two") != std::string::npos);
+        }
+
+        int w = srcw;
+        int h = srch;
+        if (!npot) {
+            // make power of two
+            if ((w & (w-1)) != 0) {
+                int i=1;
+                while (i < 8) {
+                    if ((w >> i) == 0)
+                        break;
+                    i++;
+                }
+                w = (1 << i);
+            }
+            // make power of two
+            if ((h & (h-1)) != 0) {
+                int i=1;
+                while (i < 8) {
+                    if ((h >> i) == 0)
+                        break;
+                    i++;
+                }
+                h = (1 << i);
+            }
+        }
+
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_TEXTURE_2D); // Enable Textures
         glEnable(GL_BLEND);
 
-        // wmayer: see bug report below which is caused by generating but not
-        // deleting the texture. I guess we don't need this texture and thus
-        // comment out the block.
-        // #0000721: massive memory leak when dragging an unconstrained model
+        // glGenTextures/glBindTexture was commented out but it must be active, see:
+        // #0000971: Tracing over a background image in Sketcher: image is overwritten by first dimensional constraint text
+        // #0001185: Planer image changes to number graphic when a part design constraint is made after the planar image
         //
-#if 0
         // Copy the text bitmap into memory and bind
         GLuint myTexture;
         // generate a texture
         glGenTextures(1, &myTexture);
-
         glBindTexture(GL_TEXTURE_2D, myTexture);
-#endif
 
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, nc, srcw, srch, 0, GL_RGBA, GL_UNSIGNED_BYTE,(const GLvoid*)  dataptr);
-
+        if (!npot) {
+            QImage image(w, h,QImage::Format_ARGB32_Premultiplied);
+            image.fill(0x00000000);
+            int sx = (w - srcw)/2;
+            int sy = (h - srch)/2;
+            glTexImage2D(GL_TEXTURE_2D, 0, nc, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid*)image.bits());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, srcw, srch, GL_RGBA, GL_UNSIGNED_BYTE,(const GLvoid*)  dataptr);
+        }
+        else {
+            glTexImage2D(GL_TEXTURE_2D, 0, nc, srcw, srch, 0, GL_RGBA, GL_UNSIGNED_BYTE,(const GLvoid*)  dataptr);
+        }
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glMatrixMode(GL_MODELVIEW);
@@ -878,9 +941,11 @@ void SoDatumLabel::GLRender(SoGLRenderAction * action)
 
         // Reset the Mode
         glPopMatrix();
-#if 0
+
+        // wmayer: see bug report below which is caused by generating but not
+        // deleting the texture.
+        // #0000721: massive memory leak when dragging an unconstrained model
         glDeleteTextures(1, &myTexture);
-#endif
     }
 
     glPopAttrib();

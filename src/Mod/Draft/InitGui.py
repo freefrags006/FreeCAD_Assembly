@@ -107,7 +107,7 @@ class DraftWorkbench (Workbench):
         self.cmdList = ["Draft_Line","Draft_Wire","Draft_Circle","Draft_Arc","Draft_Ellipse",
                         "Draft_Polygon","Draft_Rectangle", "Draft_Text",
                         "Draft_Dimension", "Draft_BSpline","Draft_Point",
-                        "Draft_ShapeString"]
+                        "Draft_ShapeString","Draft_Facebinder"]
         self.modList = ["Draft_Move","Draft_Rotate","Draft_Offset",
                         "Draft_Trimex", "Draft_Upgrade", "Draft_Downgrade", "Draft_Scale",
                         "Draft_Drawing","Draft_Edit","Draft_WireToBSpline","Draft_AddPoint",
@@ -117,7 +117,7 @@ class DraftWorkbench (Workbench):
                             "Draft_SelectGroup","Draft_SelectPlane",
                             "Draft_ShowSnapBar","Draft_ToggleGrid"]
         self.lineList = ["Draft_UndoLine","Draft_FinishLine","Draft_CloseLine"]
-        self.utils = ["Draft_Heal"]
+        self.utils = ["Draft_Heal","Draft_FlipDimension"]
         self.snapList = ['Draft_Snap_Lock','Draft_Snap_Midpoint','Draft_Snap_Perpendicular',
                          'Draft_Snap_Grid','Draft_Snap_Intersection','Draft_Snap_Parallel',
                          'Draft_Snap_Endpoint','Draft_Snap_Angle','Draft_Snap_Center',

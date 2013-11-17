@@ -152,6 +152,26 @@ def isAligned(edge,axis="x"):
             if edge.StartPoint.z == edge.EndPoint.z:
                     return True
     return False
+    
+def areColinear(e1,e2):
+    """areColinear(e1,e2): returns True if both edges are colinear"""
+    if not isinstance(e1.Curve,Part.Line):
+        return False
+    if not isinstance(e2.Curve,Part.Line):
+        return False
+    v1 = vec(e1)
+    v2 = vec(e2)
+    a = round(v1.getAngle(v2),precision()) 
+    if (a == 0) or (a == round(math.pi,precision())):
+        v3 = e2.Vertexes[0].Point.sub(e1.Vertexes[0].Point)
+        if DraftVecUtils.isNull(v3):
+            return True
+        else:
+            a2 = round(v1.getAngle(v3),precision())
+            if (a2 == 0) or (a2 == round(math.pi,precision())):
+                return True
+    return False
+    
 
 def hasOnlyWires(shape):
     "hasOnlyWires(shape): returns True if all the edges are inside a wire"
@@ -218,16 +238,25 @@ def findIntersection(edge1,edge2,infinite1=False,infinite2=False,ex1=False,ex2=F
         norm1 = pt2.sub(pt1).cross(pt3.sub(pt1))
         norm2 = pt2.sub(pt4).cross(pt3.sub(pt4))
         if not DraftVecUtils.isNull(norm1):
-            norm1.normalize()
+            try:
+                norm1.normalize()
+            except:
+                return []
         if not DraftVecUtils.isNull(norm2):
-            norm2.normalize()
+            try:
+                norm2.normalize()
+            except:
+                return []
         if DraftVecUtils.isNull(norm1.cross(norm2)):
             vec1 = pt2.sub(pt1)
             vec2 = pt4.sub(pt3)
             if DraftVecUtils.isNull(vec1) or DraftVecUtils.isNull(vec2):
                 return [] # One of the line has zero-length
-            vec1.normalize()
-            vec2.normalize()
+            try:
+                vec1.normalize()
+                vec2.normalize()
+            except:
+                return []
             norm3 = vec1.cross(vec2)
             if not DraftVecUtils.isNull(norm3) :
                 k = ((pt3.z-pt1.z)*(vec2.x-vec2.y)+(pt3.y-pt1.y)*(vec2.z-vec2.x)+ \
@@ -458,6 +487,21 @@ def isClockwise(edge,ref=None):
         return False
     return True
     
+def isSameLine(e1,e2):
+    """isSameLine(e1,e2): return True if the 2 edges are lines and have the same
+    points"""
+    if not isinstance(e1.Curve,Part.Line):
+        return False
+    if not isinstance(e2.Curve,Part.Line):
+        return False
+    if (DraftVecUtils.equals(e1.Vertexes[0].Point,e2.Vertexes[0].Point)) and \
+       (DraftVecUtils.equals(e1.Vertexes[-1].Point,e2.Vertexes[-1].Point)):
+           return True
+    elif (DraftVecUtils.equals(e1.Vertexes[-1].Point,e2.Vertexes[0].Point)) and \
+       (DraftVecUtils.equals(e1.Vertexes[0].Point,e2.Vertexes[-1].Point)):
+           return True
+    return False
+    
 def isWideAngle(edge):
     """returns True if the given edge is an arc with angle > 180 degrees"""
     if geomType(edge) != "Circle":
@@ -610,6 +654,24 @@ def sortEdges(lEdges, aVertex=None):
             return olEdges
         else :
             return []
+
+
+def flattenWire(wire):
+    '''flattenWire(wire): forces a wire to get completely flat
+    along its normal.'''
+    import WorkingPlane
+    n = getNormal(wire)
+    if not n:
+        return
+    o = wire.Vertexes[0].Point
+    plane = WorkingPlane.plane()
+    plane.alignToPointAndAxis(o,n,0)
+    verts = [o]
+    for v in wire.Vertexes[1:]:
+        verts.append(plane.projectPoint(v.Point))
+    verts.append(o)
+    w = Part.makePolygon(verts)
+    return w
 
 
 def findWires(edgeslist):
@@ -857,7 +919,7 @@ def getNormal(shape):
                         e1 = vec(shape.Edges[0])
                         for i in range(1,len(shape.Edges)):
                                 e2 = vec(shape.Edges[i])
-                                if 0.1 < abs(e1.getAngle(e2)) < 1.56:
+                                if 0.1 < abs(e1.getAngle(e2)) < 3.14:
                                         n = e1.cross(e2).normalize()
                                         break
         if FreeCAD.GuiUp:
@@ -874,7 +936,8 @@ def getRotation(v1,v2=FreeCAD.Vector(0,0,1)):
         return None
     axis = v1.cross(v2)
     axis.normalize()
-    angle = math.degrees(math.sqrt((v1.Length ^ 2) * (v2.Length ^ 2)) + v1.dot(v2))
+    #angle = math.degrees(math.sqrt((v1.Length ^ 2) * (v2.Length ^ 2)) + v1.dot(v2))
+    angle = math.degrees(DraftVecUtils.angle(v1,v2,axis))
     return FreeCAD.Rotation(axis,angle)
 
 def calculatePlacement(shape):

@@ -107,7 +107,7 @@ int Sketch::setUpSketch(const std::vector<Part::Geometry *> &GeoList,
     std::vector<Part::Geometry *> intGeoList, extGeoList;
     for (int i=0; i < int(GeoList.size())-extGeoCount; i++)
         intGeoList.push_back(GeoList[i]);
-    for (int i=int(GeoList.size())-extGeoCount; i < GeoList.size(); i++)
+    for (int i=int(GeoList.size())-extGeoCount; i < int(GeoList.size()); i++)
         extGeoList.push_back(GeoList[i]);
 
     addGeometry(intGeoList);
@@ -1673,7 +1673,7 @@ int Sketch::solve(void)
 
             if (soltype > 0) {
                 Base::Console().Log("If you see this message please report a way of reproducing this result at\n");
-                Base::Console().Log("https://sourceforge.net/apps/mantisbt/free-cad/main_page.php\n");
+                Base::Console().Log("http://www.freecadweb.org/tracker/main_page.php\n");
             }
 
             break;

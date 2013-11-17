@@ -53,6 +53,8 @@ def getDefaultColor(objectType):
         c = p.GetUnsigned("StructureColor",2847259391)
     elif objectType == "WindowGlass":
         c = p.GetUnsigned("WindowGlassColor",1772731135)
+    elif objectType == "Rebar":
+        c = p.GetUnsigned("RebarColor",3111475967)
     else:
         c = p.GetUnsigned("WindowsColor",810781695)
     r = float((c>>24)&0xFF)/255.0
@@ -235,7 +237,7 @@ def makeFace(wires,method=2,cleanup=False):
     '''makeFace(wires): makes a face from a list of wires, finding which ones are holes'''
     #print "makeFace: start:", wires
     import Part
-    
+        
     if not isinstance(wires,list):
         if len(wires.Vertexes) < 3:
             raise
@@ -377,9 +379,9 @@ def getCutVolume(cutplane,shapes):
         invcutvolume = cutface.extrude(cutnormal)
         return cutface,cutvolume,invcutvolume
 
-def getShapeFromMesh(mesh):
-    import Part, MeshPart
-    if mesh.isSolid() and (mesh.countComponents() == 1):
+def getShapeFromMesh(mesh,fast=True,tolerance=0.001,flat=False,cut=True):
+    import Part, MeshPart, DraftGeomUtils
+    if mesh.isSolid() and (mesh.countComponents() == 1) and fast:
         # use the best method
         faces = []
         for f in mesh.Facets:
@@ -394,16 +396,33 @@ def getShapeFromMesh(mesh):
         return solid
 
     faces = []  
-    segments = mesh.getPlanarSegments(0.001) # use rather strict tolerance here
+    segments = mesh.getPlanarSegments(tolerance)
+    #print len(segments)
     for i in segments:
         if len(i) > 0:
             wires = MeshPart.wireFromSegment(mesh, i)
             if wires:
-                faces.append(makeFace(wires))
+                if flat:
+                    nwires = []
+                    for w in wires:
+                        nwires.append(DraftGeomUtils.flattenWire(w))
+                    wires = nwires
+                try:
+                    faces.append(makeFace(wires,method=int(cut)+1))
+                except:
+                    return None
     try:
         se = Part.makeShell(faces)
+        se = se.removeSplitter()
+        if flat:
+            return se
     except:
-        return None
+        try:
+            cp = Part.makeCompound(faces)
+        except:
+            return None
+        else:
+            return cp
     else:
         try:
             solid = Part.Solid(se)
@@ -411,18 +430,39 @@ def getShapeFromMesh(mesh):
             return se
         else:
             return solid
-  
+            
+def projectToVector(shape,vector):
+    '''projectToVector(shape,vector): projects the given shape on the given
+    vector'''
+    projpoints = []
+    minl = 10000000000
+    maxl = -10000000000
+    for v in shape.Vertexes:
+        p = DraftVecUtils.project(v.Point,vector)
+        projpoints.append(p)
+        l = p.Length
+        if p.getAngle(vector) > 1:
+            l = -l
+        if l > maxl:
+            maxl = l
+        if l < minl:
+            minl = l
+    return DraftVecUtils.scaleTo(vector,maxl-minl)
 
-def meshToShape(obj,mark=True):
-    '''meshToShape(object,[mark]): turns a mesh into a shape, joining coplanar facets. If
-    mark is True (default), non-solid objects will be marked in red'''
+def meshToShape(obj,mark=True,fast=True,tol=0.001,flat=False,cut=True):
+    '''meshToShape(object,[mark,fast,tol,flat,cut]): turns a mesh into a shape, joining coplanar facets. If
+    mark is True (default), non-solid objects will be marked in red. Fast uses a faster algorithm by
+    building a shell from the facets then removing splitter, tol is the tolerance used when converting
+    mesh segments to wires, flat will force the wires to be perfectly planar, to be sure they can be
+    turned into faces, but this might leave gaps in the final shell. If cut is true, holes in faces are
+    made by subtraction (default)'''
 
     name = obj.Name
     if "Mesh" in obj.PropertiesList:
         faces = []  
         mesh = obj.Mesh
         plac = obj.Placement
-        solid = getShapeFromMesh(mesh)
+        solid = getShapeFromMesh(mesh,fast,tol,flat,cut)
         if solid:
             if solid.isClosed() and solid.isValid():
                 FreeCAD.ActiveDocument.removeObject(name)
@@ -495,13 +535,13 @@ def mergeCells(objectslist):
     FreeCAD.ActiveDocument.recompute()
     return base
 
-def download(url):
+def download(url,force=False):
     '''downloads a file from the given URL and saves it in the
     user directory. Returns the path to the saved file'''
     import urllib2, os
     name = url.split('/')[-1]
     filepath = os.path.join(FreeCAD.ConfigGet("UserAppData"),name)
-    if os.path.exists(filepath):
+    if os.path.exists(filepath) and not(force):
         return filepath
     try:
         FreeCAD.Console.PrintMessage("downloading "+url+" ...\n")
@@ -685,9 +725,14 @@ class _CommandMeshToShape:
                 if f.InList:
                     if f.InList[0].isDerivedFrom("App::DocumentObjectGroup"):
                         g = f.InList[0]
+            p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Arch")
+            fast = p.GetBool("ConversionFast",True)
+            tol = p.GetFloat("ConversionTolerance",0.001)
+            flat = p.GetBool("ConversionFlat",False)
+            cut = p.GetBool("ConversionCut",False)
             FreeCAD.ActiveDocument.openTransaction(str(translate("Arch","Mesh to Shape")))
             for obj in FreeCADGui.Selection.getSelection():
-                newobj = meshToShape(obj)
+                newobj = meshToShape(obj,True,fast,tol,flat,cut)
                 if g and newobj:
                     g.addObject(newobj)
             FreeCAD.ActiveDocument.commitTransaction()
@@ -778,6 +823,7 @@ class _CommandCheck:
 
 
 class _CommandFixture:
+    # OBSOLETE - To be removed
     "the Arch Fixture command definition"
     def GetResources(self):
         return {'Pixmap'  : 'Arch_Fixture',
@@ -809,4 +855,4 @@ FreeCADGui.addCommand('Arch_SelectNonSolidMeshes',_CommandSelectNonSolidMeshes()
 FreeCADGui.addCommand('Arch_RemoveShape',_CommandRemoveShape())
 FreeCADGui.addCommand('Arch_CloseHoles',_CommandCloseHoles())
 FreeCADGui.addCommand('Arch_Check',_CommandCheck())
-FreeCADGui.addCommand('Arch_Fixture',_CommandFixture())
+#FreeCADGui.addCommand('Arch_Fixture',_CommandFixture())

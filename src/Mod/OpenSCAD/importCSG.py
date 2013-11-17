@@ -341,16 +341,32 @@ def p_operation(p):
               | projection_action
               '''
     p[0] = p[1]
-
+    
+    
 def p_not_supported(p):
     '''
-    not_supported : hull LPAREN RPAREN OBRACE block_list EBRACE
+    not_supported : hull LPAREN keywordargument_list RPAREN OBRACE block_list EBRACE
                   | minkowski LPAREN keywordargument_list RPAREN OBRACE block_list EBRACE
-                  | glide LPAREN RPAREN OBRACE block_list EBRACE
+                  | glide LPAREN keywordargument_list RPAREN OBRACE block_list EBRACE
                   '''
-    if gui:
+    if gui and not FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/OpenSCAD").\
+            GetBool('usePlaceholderForUnsupported'):
         from PyQt4 import QtGui
         QtGui.QMessageBox.critical(None, unicode(translate('OpenSCAD',"Unsupported Function"))+" : "+p[1],unicode(translate('OpenSCAD',"Press OK")))
+    else:
+        from OpenSCADFeatures import OpenSCADPlaceholder
+        newobj=doc.addObject("Part::FeaturePython",p[1])
+        OpenSCADPlaceholder(newobj,p[6],str(p[3]))
+    if gui:
+        if FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/OpenSCAD").\
+            GetBool('useViewProviderTree'):
+            from OpenSCADFeatures import ViewProviderTree
+            ViewProviderTree(newobj.ViewObject)
+        else:
+            newobj.ViewObject.Proxy = 0
+        #don't hide the children
+    p[0] = [newobj]
+
     
 def p_size_vector(p):
     'size_vector : OSQUARE NUMBER COMMA NUMBER COMMA NUMBER ESQUARE'
@@ -798,23 +814,29 @@ def p_cylinder_action(p):
             mycyl.Radius = r1
         else :
             if printverbose: print "Make Prism"
-            mycyl=doc.addObject("Part::Extrusion","prism")
-            mycyl.Dir = (0,0,h)
-            try :
-                import Draft
-                mycyl.Base = Draft.makePolygon(n,r1)
-            except :
-                # If Draft can't import (probably due to lack of Pivy on Mac and
-                # Linux builds of FreeCAD), this is a fallback.
-                # or old level of FreeCAD
-                if printverbose: print "Draft makePolygon Failed, falling back on manual polygon"
-                mycyl.Base = myPolygon(n,r1)
+            if False: #user Draft Polygon
+                mycyl=doc.addObject("Part::Extrusion","prism")
+                mycyl.Dir = (0,0,h)
+                try :
+                    import Draft
+                    mycyl.Base = Draft.makePolygon(n,r1)
+                except :
+                    # If Draft can't import (probably due to lack of Pivy on Mac and
+                    # Linux builds of FreeCAD), this is a fallback.
+                    # or old level of FreeCAD
+                    if printverbose: print "Draft makePolygon Failed, falling back on manual polygon"
+                    mycyl.Base = myPolygon(n,r1)
+                    # mycyl.Solid = True
 
-            else :
-                pass
-            if gui:
-                mycyl.Base.ViewObject.hide()
-            # mycyl.Solid = True
+                else :
+                    pass
+                if gui:
+                    mycyl.Base.ViewObject.hide()
+            else: #Use Part::Prism primitive
+                mycyl=doc.addObject("Part::Prism","prism")
+                mycyl.Polygon = n
+                mycyl.Length  = r1
+                mycyl.Height  = h
 
     else:
         if printverbose: print "Make Cone"

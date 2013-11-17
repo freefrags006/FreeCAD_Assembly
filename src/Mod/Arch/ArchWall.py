@@ -35,6 +35,7 @@ def makeWall(baseobj=None,length=None,width=None,height=None,align="Center",face
     given object, which can be a sketch, a draft object, a face or a solid, or no object at
     all, then you must provide length, width and height. Align can be "Center","Left" or "Right", 
     face can be an index number of a face in the base object to base the wall on.'''
+    p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Arch")
     obj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython",name)
     _Wall(obj)
     _ViewProviderWall(obj.ViewObject)
@@ -46,8 +47,12 @@ def makeWall(baseobj=None,length=None,width=None,height=None,align="Center",face
         obj.Length = length
     if width:
         obj.Width = width
+    else:
+        obj.Width = p.GetFloat("WallWidth",200)
     if height:
         obj.Height = height
+    else:
+        obj.Height = p.GetFloat("WallHeight",3000)
     obj.Align = align
     if obj.Base:
         if Draft.getType(obj.Base) != "Space":
@@ -85,6 +90,7 @@ def joinWalls(walls,delete=False):
         for n in deleteList:
             FreeCAD.ActiveDocument.removeObject(n)
     FreeCAD.ActiveDocument.recompute()
+    base.ViewObject.show()
     return base
     
 def mergeShapes(w1,w2):
@@ -232,7 +238,7 @@ class _CommandWall:
         FreeCADGui.doCommand('base.addGeometry(trace)')
         FreeCADGui.doCommand('Arch.makeWall(base,width='+str(self.Width)+',height='+str(self.Height)+',align="'+str(self.Align)+'")')
 
-    def update(self,point):
+    def update(self,point,info):
         "this function is called by the Snapper when the mouse is moved"
         b = self.points[0]
         n = FreeCAD.DraftWorkingPlane.axis
@@ -331,9 +337,26 @@ class _CommandMergeWalls:
         
     def Activated(self):
         walls = FreeCADGui.Selection.getSelection()
-        if len(walls) < 2:
-            FreeCAD.Console.PrintMessage(str(translate("Arch","You must select at least 2 walls")))
-            return
+        if len(walls) == 1: 
+            if Draft.getType(walls[0]) == "Wall":
+                ostr = "FreeCAD.ActiveDocument."+ walls[0].Name
+                ok = False
+                for o in walls[0].Additions:
+                    if Draft.getType(o) == "Wall":
+                        ostr += ",FreeCAD.ActiveDocument." + o.Name
+                        ok = True
+                if ok:
+                    FreeCAD.ActiveDocument.openTransaction(str(translate("Arch","Merge Wall")))
+                    FreeCADGui.doCommand("import Arch")
+                    FreeCADGui.doCommand("Arch.joinWalls(["+ostr+"],delete=True)")
+                    FreeCAD.ActiveDocument.commitTransaction()
+                    return
+                else:
+                    FreeCAD.Console.PrintWarning(str(translate("Arch","The selected wall contain no subwall to merge")))
+                    return
+            else:
+                FreeCAD.Console.PrintWarning(str(translate("Arch","Please select only wall objects")))
+                return
         for w in walls:
             if Draft.getType(w) != "Wall":
                 FreeCAD.Console.PrintMessage(str(translate("Arch","Please select only wall objects")))
@@ -342,11 +365,8 @@ class _CommandMergeWalls:
         FreeCADGui.doCommand("import Arch")
         FreeCADGui.doCommand("Arch.joinWalls(FreeCADGui.Selection.getSelection(),delete=True)")
         FreeCAD.ActiveDocument.commitTransaction()
-                        
-        
-        
-        
-        
+ 
+
 class _Wall(ArchComponent.Component):
     "The Wall object"
     def __init__(self,obj):
@@ -365,6 +385,8 @@ class _Wall(ArchComponent.Component):
                         str(translate("Arch","If True, if this wall is based on a face, it will use its border wire as trace, and disconsider the face.")))
         obj.addProperty("App::PropertyInteger","Face","Arch",
                         str(translate("Arch","The face number of the base object used to build this wall")))
+        obj.addProperty("App::PropertyLength","Offset","Arch",
+                        str(translate("Arch","The offset between this wall and its baseline (only for left and right alignments)")))
         obj.Align = ['Left','Right','Center']
         obj.ForceWire = False
         self.Type = "Wall"
@@ -432,12 +454,20 @@ class _Wall(ArchComponent.Component):
             dvec.normalize()
         if obj.Align == "Left":
             dvec.multiply(width)
+            if hasattr(obj,"Offset"):
+                if obj.Offset:
+                    dvec2 = DraftVecUtils.scaleTo(dvec,obj.Offset)
+                    wire = DraftGeomUtils.offsetWire(wire,dvec2)
             w2 = DraftGeomUtils.offsetWire(wire,dvec)
             w1 = Part.Wire(DraftGeomUtils.sortEdges(wire.Edges))
             sh = DraftGeomUtils.bind(w1,w2)
         elif obj.Align == "Right":
             dvec.multiply(width)
             dvec = dvec.negative()
+            if hasattr(obj,"Offset"):
+                if obj.Offset:
+                    dvec2 = DraftVecUtils.scaleTo(dvec,obj.Offset)
+                    wire = DraftGeomUtils.offsetWire(wire,dvec2)
             w2 = DraftGeomUtils.offsetWire(wire,dvec)
             w1 = Part.Wire(DraftGeomUtils.sortEdges(wire.Edges))
             sh = DraftGeomUtils.bind(w1,w2)

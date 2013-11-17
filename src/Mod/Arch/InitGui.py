@@ -69,11 +69,11 @@ class ArchWorkbench(Workbench):
         from DraftTools import translate
 
         # arch tools
-        self.archtools = ["Arch_Wall","Arch_Structure",
+        self.archtools = ["Arch_Wall","Arch_Structure","Arch_Rebar",
                      "Arch_Floor","Arch_Building","Arch_Site",
                      "Arch_Window","Arch_Roof","Arch_Axis",
                      "Arch_SectionPlane","Arch_Space","Arch_Stairs",
-                     "Arch_Add","Arch_Remove","Arch_Fixture"]
+                     "Arch_Add","Arch_Remove"]
         self.meshtools = ["Arch_SplitMesh","Arch_MeshToShape",
                      "Arch_SelectNonSolidMeshes","Arch_RemoveShape",
                      "Arch_CloseHoles","Arch_MergeWalls"]
@@ -82,17 +82,18 @@ class ArchWorkbench(Workbench):
         # draft tools
         self.drafttools = ["Draft_Line","Draft_Wire","Draft_Circle","Draft_Arc","Draft_Ellipse",
                         "Draft_Polygon","Draft_Rectangle", "Draft_Text",
-                        "Draft_Dimension", "Draft_BSpline","Draft_Point"]
+                        "Draft_Dimension", "Draft_BSpline","Draft_Point","Draft_ShapeString",
+                        "Draft_Facebinder"]
         self.draftmodtools = ["Draft_Move","Draft_Rotate","Draft_Offset",
                         "Draft_Trimex", "Draft_Upgrade", "Draft_Downgrade", "Draft_Scale",
-                        "Draft_Drawing","Draft_Edit","Draft_Shape2DView","Draft_Draft2Sketch","Draft_Array",
+                        "Draft_Drawing","Draft_Shape2DView","Draft_Draft2Sketch","Draft_Array",
                         "Draft_Clone"]
         self.extramodtools = ["Draft_WireToBSpline","Draft_AddPoint","Draft_DelPoint"]
         self.draftcontexttools = ["Draft_ApplyStyle","Draft_ToggleDisplayMode","Draft_AddToGroup",
                             "Draft_SelectGroup","Draft_SelectPlane",
                             "Draft_ShowSnapBar","Draft_ToggleGrid","Draft_UndoLine",
                             "Draft_FinishLine","Draft_CloseLine"]
-        self.draftutils = ["Draft_Heal"]
+        self.draftutils = ["Draft_Heal","Draft_FlipDimension"]
         self.snapList = ['Draft_Snap_Lock','Draft_Snap_Midpoint','Draft_Snap_Perpendicular',
                          'Draft_Snap_Grid','Draft_Snap_Intersection','Draft_Snap_Parallel',
                          'Draft_Snap_Endpoint','Draft_Snap_Angle','Draft_Snap_Center',
@@ -112,6 +113,7 @@ class ArchWorkbench(Workbench):
         FreeCADGui.addIconPath(":/icons")
         FreeCADGui.addLanguagePath(":/translations")
         FreeCADGui.addPreferencePage(":/ui/archprefs-base.ui","Arch")
+        FreeCADGui.addPreferencePage(":/ui/archprefs-import.ui","Arch")
         if hasattr(FreeCADGui,"draftToolBar"):
             if not hasattr(FreeCADGui.draftToolBar,"loadedPreferences"):
                 FreeCADGui.addPreferencePage(":/ui/userprefs-base.ui","Draft")
