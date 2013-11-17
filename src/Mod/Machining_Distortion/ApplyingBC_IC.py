@@ -1,8 +1,9 @@
-def ApplyingBC_IC(Casedir,YoungModulus,PoissonCoeff,OUTER_GRID_No1,OUTER_GRID_No2,OUTER_GRID_No3,Meshobject) :
+def ApplyingBC_IC(CaseFile,YoungModulus,PoissonCoeff,OUTER_GRID_No1,OUTER_GRID_No2,OUTER_GRID_No3,Meshobject) :
     # Variables generales
     import os,subprocess
     #
-    AC_file = open (str(Casedir + "/" + "Applied_Conditions.txt"),'w')
+    #AC_file = open (str(CasePrefix + "Applied_Conditions.txt"),'w')
+    AC_file = CaseFile
     #
     #Setup local coordinate system by using *TRANSFORM keyword to avoid any rigid body motions during isostatic clamping
     #Outer_Grid_no_1 is origin, no_2 is on x-axis and no_3 is in local XY plane
@@ -83,17 +84,17 @@ def ApplyingBC_IC(Casedir,YoungModulus,PoissonCoeff,OUTER_GRID_No1,OUTER_GRID_No
     #
     AC_file.write("*END STEP")
     #
-    AC_file.close() 
-    os.chdir(str(Casedir))
-    fnull = open(os.devnull, 'w')
-    if os.name != "posix":
-        process = subprocess.Popen("type geometry_fe_input.inp Applied_Conditions.txt> final_fe_input.inp",shell=True)
-        process.wait()
-        process = subprocess.Popen("del /Q geometry_fe_input.inp",shell=True)
-        process.wait()
-    else:
-        commandline = "cat Applied_Conditions.txt >> geometry_fe_input.inp"
-        result = subprocess.call(commandline, shell = True, stdout = fnull, stderr = fnull)
+    #AC_file.close() 
+    #os.chdir(str(Casedir))
+    #fnull = open(os.devnull, 'w')
+    #if os.name != "posix":
+    #    process = subprocess.Popen("type geometry_fe_input.inp Applied_Conditions.txt> final_fe_input.inp",shell=True)
+    #    process.wait()
+    #    process = subprocess.Popen("del /Q geometry_fe_input.inp",shell=True)
+    #    process.wait()
+    #else:
+    #    commandline = "cat Applied_Conditions.txt >> geometry_fe_input.inp"
+    #    result = subprocess.call(commandline, shell = True, stdout = fnull, stderr = fnull)
     #
-    fnull.close()
+    #fnull.close()
     return

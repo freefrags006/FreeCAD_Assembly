@@ -181,6 +181,7 @@ class _JobControlTaskPanel:
         QtCore.QObject.connect(self.formUi.toolButton_chooseOutputDir, QtCore.SIGNAL("clicked()"), self.chooseOutputDir)
         QtCore.QObject.connect(self.formUi.pushButton_generate, QtCore.SIGNAL("clicked()"), self.generate)
 
+        self.formUi.lineEdit_JobId.setText(FemGui.getActiveAnalysis().Uid)
         self.update()
         
 
@@ -213,10 +214,12 @@ class _JobControlTaskPanel:
         dirName = self.formUi.lineEdit_outputDir.text()
         
         MeshObject = None
+        MeshSurfaceFaces = []
         if FemGui.getActiveAnalysis():
             for i in FemGui.getActiveAnalysis().Member:
                 if i.isDerivedFrom("Fem::FemMeshObject"):
                     MeshObject = i
+                    MeshSurfaceFaces = MeshObject.ViewObject.VisibleElementFaces
         else:
             QtGui.QMessageBox.critical(None, "Missing prerequisit","No active Analysis")
             return
@@ -278,7 +281,42 @@ class _JobControlTaskPanel:
         poisson_ratio = float(matmap['PartDist_poissonratio'])
         plate_thickness = float(matmap['PartDist_platethickness'])
         
-        batch = open(str(dirName + "/" + "lcmt_CALCULIX_Calculation_batch.bat"),'wb')
+        JobId = self.formUi.lineEdit_JobId.text()
+        JobDir = dirName + '/' + str(JobId) + '/'
+
+        if ( not os.path.exists(JobDir) ):
+            os.mkdir(JobDir)
+
+        # Write the material parameter to a file:
+        #Lets generate a sigini Input Deck for the calculix user subroutine
+        sigini_input = open (str(JobDir + "sigini_input.txt"),'wb')
+        
+        #Write plate thickness to the sigini_file
+        sigini_input.write(str(plate_thickness) + "\n")
+        #Now write the Interpolation coefficients, first the L and then the LC ones
+        sigini_input.write(\
+        str(lc1) + "," + \
+        str(lc2) + "," + \
+        str(lc3) + "," + \
+        str(lc4) + "," + \
+        str(lc5) + "," + \
+        str(lc6) + "\n")
+        sigini_input.write(\
+        str(ltc1) + "," + \
+        str(ltc2) + "," + \
+        str(ltc3) + "," + \
+        str(ltc4) + "," + \
+        str(ltc5) + "," + \
+        str(ltc6) + "\n")
+        sigini_input.close()
+
+        #Lets generate the surface nodes
+        surface_input = open (str(JobDir + "surface_input.txt"),'w')
+        for i in MeshSurfaceFaces:
+            surface_input.write(str(i[0]) +','+str(i[1]) + '\n')
+        surface_input.close()
+        
+        batch = open(str(JobDir + "lcmt_CALCULIX_Calculation_batch.bat"),'w')
         batch.write("#!/bin/bash\n")        
         batch.write("export CCX_NPROC=4\n")
 
@@ -321,47 +359,34 @@ class _JobControlTaskPanel:
 
                             continue
 
-                        Case_Dir = str(dirName) + "/" + filename_without_suffix +\
-                        "_"+"x_rot"+ str(int(j))+ \
+                        CasePrefix = JobDir + \
+                        "Case-x_rot"+ str(int(j))+ \
                         "_"+"y_rot"+ str(int(k))+ \
                         "_"+"z_rot"+ str(int(l))+ \
-                        "_"+"z_l"+ str(int(i))
-                        if ( os.path.exists(str(Case_Dir)) ):
-                            os.chdir(str(dirName))
-                            shutil.rmtree(str(Case_Dir))
+                        "_"+"z_l"+ str(int(i)) + '__'
+                        #if ( os.path.exists(str(Case_Dir)) ):
+                        #    os.chdir(str(dirName))
+                        #    shutil.rmtree(str(Case_Dir))
+                        
                         OutStr = OutStr + "\n"
                         self.formUi.textEdit_Output.setText(OutStr)
                         
                         FreeCADGui.updateGui()
-                        os.mkdir(str(Case_Dir))
+                        #os.mkdir(str(Case_Dir))
 
-                        #Lets generate a sigini Input Deck for the calculix user subroutine
-                        sigini_input = open (str(Case_Dir + "/" + "sigini_input.txt"),'wb')
-                        
-                        #Write plate thickness to the sigini_file
-                        sigini_input.write(str(plate_thickness) + "\n")
-                        #Now write the Interpolation coefficients, first the L and then the LC ones
-                        sigini_input.write(\
-                        str(lc1) + "," + \
-                        str(lc2) + "," + \
-                        str(lc3) + "," + \
-                        str(lc4) + "," + \
-                        str(lc5) + "," + \
-                        str(lc6) + "\n")
-                        sigini_input.write(\
-                        str(ltc1) + "," + \
-                        str(ltc2) + "," + \
-                        str(ltc3) + "," + \
-                        str(ltc4) + "," + \
-                        str(ltc5) + "," + \
-                        str(ltc6) + "\n")
-                        sigini_input.close()
                         #Check if the 
-                        MeshObject.FemMesh.writeABAQUS(str(Case_Dir + "/" + "geometry_fe_input.inp"))
+                        MeshObject.FemMesh.writeABAQUS(str(CasePrefix + "geometry_fe_input.inp"))
                         IsoNodes = list(IsoNodes)
-                        ApplyingBC_IC(Case_Dir, young_modulus,poisson_ratio,IsoNodes[0],IsoNodes[1],IsoNodes[2],MeshObject)
-                        batch.write("cd \"" + str(Case_Dir) + "\"\n")
-                        batch.write("ccx -i geometry_fe_input\n")
+                        CaseFile = open(str(CasePrefix + "geometry_fe_input.inp"),'a')
+                        ApplyingBC_IC(CaseFile, young_modulus,poisson_ratio,IsoNodes[0],IsoNodes[1],IsoNodes[2],MeshObject)
+                        
+                        # include the surface nodes
+                        CaseFile.write("\n\n*INCLUDE, INPUT=" + JobDir + "surface_input.txt\n\n")
+                        # include the material info
+                        CaseFile.write("\n\n*INCLUDE, INPUT=" + JobDir + "sigini_input.txt\n\n")
+                        CaseFile.close()
+                        #batch.write("cd \"" + str(Case_Dir) + "\"\n")
+                        batch.write("ccx -i " + CasePrefix + "geometry_fe_input\n")
         
                         l= l + z_rot_intervall
                     k = k + y_rot_intervall
