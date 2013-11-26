@@ -269,7 +269,7 @@ class _MaterialTaskPanel:
             self.fillMaterialCombo()
     
     def chooseMat(self,index):
-        if index == 0:return 
+        if index <= 0:return 
         if len(self.pathList) == 0:return
 
         import Material

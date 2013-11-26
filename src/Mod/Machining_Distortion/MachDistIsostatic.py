@@ -84,7 +84,7 @@ class _CommandIsostatic:
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Isostatic","Add or edit a Machine-Distortion Isostatic")}
         
     def Activated(self):
-        
+        import FemGui
         FreeCAD.ActiveDocument.openTransaction("Isostatic")
 
         obj = None

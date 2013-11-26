@@ -149,7 +149,14 @@ class _ViewProviderMachDistAnalysis:
         return
   
     def doubleClicked(self,vobj):
-        taskd = _JobControlTaskPanel(self.Object)
+        import FemGui
+        if FemGui.getActiveAnalysis() == None:
+            if FreeCADGui.activeWorkbench() != 'MachiningDistortionWorkbench':
+                FreeCADGui.activateWorkbench("MachiningDistortionWorkbench")
+            FemGui.setActiveAnalysis(self.Object)
+            return True
+            
+        taskd = _JobControlTaskPanel()
         taskd.obj = vobj.Object
         taskd.update()
         FreeCADGui.Control.showDialog(taskd)

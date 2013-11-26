@@ -57,7 +57,7 @@ class _CommandGround:
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Ground","Add or edit a Machine-Distortion Ground")}
         
     def Activated(self):
-        
+        import FemGui
         FreeCAD.ActiveDocument.openTransaction("Ground")
 
         obj = None

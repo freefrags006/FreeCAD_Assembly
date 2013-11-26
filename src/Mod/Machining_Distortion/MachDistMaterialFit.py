@@ -153,7 +153,7 @@ else:
         def setEdit(self,vobj,mode):
             taskd = _MaterialFitTaskPanel(self.Object)
             taskd.obj = vobj.Object
-            taskd.update()
+            #taskd.update()
             FreeCADGui.Control.showDialog(taskd)
             return True
         
@@ -188,6 +188,12 @@ else:
             QtCore.QObject.connect(self.formUi.toolButton_chooseDir, QtCore.SIGNAL("clicked()"), self.chooseDir)
             QtCore.QObject.connect(self.formUi.comboBox_MaterialsInDir, QtCore.SIGNAL("currentIndexChanged(int)"), self.chooseMat)
             
+            self.polval1 = None
+            self.polval2 = None
+            self.xmax1   = None
+            self.xmin1   = None
+
+
             self.update()
             
         def transferTo(self):
@@ -200,20 +206,45 @@ else:
             matmap['PartDist_platethickness'] = str(self.formUi.spinBox_Plate_Thickness.value())
 
 
-            #matmap['PartDist_lc1'] = str(self.formUi.lc1.value())
+            matmap['PartDist_lc1'] = str(self.formUi.lc1.value())
+            matmap['PartDist_lc2'] = str(self.formUi.lc2.value())
+            matmap['PartDist_lc3'] = str(self.formUi.lc3.value())
+            matmap['PartDist_lc4'] = str(self.formUi.lc4.value())
+            matmap['PartDist_lc5'] = str(self.formUi.lc5.value())
+            matmap['PartDist_lc6'] = str(self.formUi.lc6.value())
+
+            matmap['PartDist_ltc1'] = str(self.formUi.ltc1.value())
+            matmap['PartDist_ltc2'] = str(self.formUi.ltc2.value())
+            matmap['PartDist_ltc3'] = str(self.formUi.ltc3.value())
+            matmap['PartDist_ltc4'] = str(self.formUi.ltc4.value())
+            matmap['PartDist_ltc5'] = str(self.formUi.ltc5.value())
+            matmap['PartDist_ltc6'] = str(self.formUi.ltc6.value())
+            #print matmap
             self.obj.Material = matmap 
 
         
         def transferFrom(self):
             "Transfer from the object to the dialog"
             matmap = self.obj.Material
-
+            #print matmap
             self.formUi.spinBox_young_modulus.setValue(float(matmap['FEM_youngsmodulus']))
             self.formUi.spinBox_poisson_ratio.setValue(float(matmap['PartDist_poissonratio']))
             self.formUi.spinBox_Plate_Thickness.setValue(float(matmap['PartDist_platethickness']))
 
+            self.formUi.lc1.setValue(float(matmap['PartDist_lc1']))
+            self.formUi.lc2.setValue(float(matmap['PartDist_lc2']))
+            self.formUi.lc3.setValue(float(matmap['PartDist_lc3']))
+            self.formUi.lc4.setValue(float(matmap['PartDist_lc4']))
+            self.formUi.lc5.setValue(float(matmap['PartDist_lc5']))
+            self.formUi.lc6.setValue(float(matmap['PartDist_lc6']))
 
-            #self.formUi.lc1.setValue(float(matmap['PartDist_lc1']))
+            self.formUi.ltc1.setValue(float(matmap['PartDist_ltc1']))
+            self.formUi.ltc2.setValue(float(matmap['PartDist_ltc2']))
+            self.formUi.ltc3.setValue(float(matmap['PartDist_ltc3']))
+            self.formUi.ltc4.setValue(float(matmap['PartDist_ltc4']))
+            self.formUi.ltc5.setValue(float(matmap['PartDist_ltc5']))
+            self.formUi.ltc6.setValue(float(matmap['PartDist_ltc6']))
+
 
         def isAllowedAlterSelection(self):
             return False
@@ -253,7 +284,7 @@ else:
                 self.fillMaterialCombo()
         
         def chooseMat(self,index):
-            if index == 0:return 
+            if index <= 0:return 
             if len(self.pathList) == 0:return 
             
             import Material
@@ -262,7 +293,7 @@ else:
             
             self.obj.Material = Material.importFCMat(str(name))
             #print self.obj.Material
-            
+            #print "choose Mat", index, name
             self.transferFrom()
             
         def fillMaterialCombo(self):
@@ -275,30 +306,62 @@ else:
                 self.formUi.comboBox_MaterialsInDir.addItem(os.path.basename(i) )
         
         def checkChanged(self,index):
-            print "change"
+            #print "change"
+            self.updateFit()
             self.updatePlot()
         
-        def updatePlot(self):
+        def updateFit(self):
             print "update plot" 
-            x = []
-            y = []
+            x1 = []
+            y1 = []
+            x2 = []
+            y2 = []
 
             for i in range(self.formUi.tableWidget.rowCount () ):
-                if self.formUi.tableWidget.item(i,0).text() == '1':
+                if self.formUi.tableWidget.item(i,0).text() == 'LC':
                     if self.formUi.tableWidget.cellWidget(i,3).checkState() == 2:
-                        x.append(float (self.formUi.tableWidget.item(i,1).text()) )
-                        y.append(float (self.formUi.tableWidget.item(i,2).text()) )
+                        x1.append(float (self.formUi.tableWidget.item(i,1).text()) )
+                        y1.append(float (self.formUi.tableWidget.item(i,2).text()) )
+                else:
+                    if self.formUi.tableWidget.cellWidget(i,3).checkState() == 2:
+                        x2.append(float (self.formUi.tableWidget.item(i,1).text()) )
+                        y2.append(float (self.formUi.tableWidget.item(i,2).text()) )
+               
+            self.polval1 = polyfit(x1, y1, 6)
+            self.polval2 = polyfit(x2, y2, 6)
+            self.xmin1 = min(x1)
+            self.xmax1 = max(x1)
+            #self.xmin2 = min(x2)
+            #self.xmax2 = max(x2)
+            self.formUi.lc1.setValue(self.polval1[1])
+            self.formUi.lc2.setValue(self.polval1[2])
+            self.formUi.lc3.setValue(self.polval1[3])
+            self.formUi.lc4.setValue(self.polval1[4])
+            self.formUi.lc5.setValue(self.polval1[5])
+            self.formUi.lc6.setValue(self.polval1[6])
 
-            polval = polyfit(x, y, 6)
+            self.formUi.ltc1.setValue(self.polval2[1])
+            self.formUi.ltc2.setValue(self.polval2[2])
+            self.formUi.ltc3.setValue(self.polval2[3])
+            self.formUi.ltc4.setValue(self.polval2[4])
+            self.formUi.ltc5.setValue(self.polval2[5])
+            self.formUi.ltc6.setValue(self.polval2[6])
 
-            newx = linspace(min(x), max(x), 100)
 
-            newy = []
+        def updatePlot(self):
+            newx = linspace(self.xmin1,self.xmax1, 100)
+            newy1 = []
+            newy2 = []
             for i in newx:
-                newy.append(i**6*polval[0]+i**5*polval[1]+i**4*polval[2]+i**3*polval[3]+i**2*polval[4]+i*polval[5]+polval[6])
+                newy1.append(i**6*self.polval1[0]+i**5*self.polval1[1]+i**4*self.polval1[2]+i**3*self.polval1[3]+i**2*self.polval1[4]+i*self.polval1[5]+self.polval1[6])
+                newy2.append(i**6*self.polval2[0]+i**5*self.polval2[1]+i**4*self.polval2[2]+i**3*self.polval2[3]+i**2*self.polval2[4]+i*self.polval2[5]+self.polval2[6])
 
-            #Plot.figure("Fit diagram")
-            Plot.plot(newx,newy)
+            
+            Plot.removeSerie(1)
+            Plot.removeSerie(0)
+            Plot.plot(newx,newy1,name='LC')
+            Plot.plot(newx,newy2,name='LTC')
+            
                     
                 
         def add_fit_data(self):
@@ -316,7 +379,11 @@ else:
                 if row[0] == '1' or row[0] == '2':
                     #print row[0],row[1],row[2]
                     self.formUi.tableWidget.insertRow(0)
-                    item = QtGui.QTableWidgetItem(row[0])
+                    if row[0] == '1':
+                        item = QtGui.QTableWidgetItem('LC')
+                    else:
+                        item = QtGui.QTableWidgetItem('LTC')
+                    
                     self.formUi.tableWidget.setItem(0,0,item)
                     item = QtGui.QTableWidgetItem(row[1])
                     self.formUi.tableWidget.setItem(0,1,item)
@@ -327,32 +394,12 @@ else:
                     QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
                     self.formUi.tableWidget.setCellWidget(0,3,item)
                     
-                if row[0] == '1' :
-                    xval = float(row[1])
-                    yval = float(row[2])
-                    #print xval,yval
-                    x.append(xval)
-                    y.append(yval)
-
-            self.formUi.tableWidget.resizeColumnsToContents()
-            
-            polval = polyfit(x, y, 6)
-
-
-            xmin = min(x)
-            xmax = max(x)
-            xdist = xmax - xmin
-            ymin = min(y)
-            ymax = max(y)
-            ydist = ymax - ymin
-
-            newx = linspace(xmin, xmax, 100)
-
-            newy = []
-            for i in newx:
-                newy.append(i**6*polval[0]+i**5*polval[1]+i**4*polval[2]+i**3*polval[3]+i**2*polval[4]+i*polval[5]+polval[6])
-
+            #Plot.plot(newx,newy)
             Plot.figure("Fit diagram")
-            Plot.plot(newx,newy)
+            Plot.getPlot().legend = True
+            self.formUi.tabWidget.setCurrentIndex(1)
+            self.updateFit()
+            self.updatePlot()
+            
             
     FreeCADGui.addCommand('MachDist_MaterialFit',_CommandMaterialFit())
