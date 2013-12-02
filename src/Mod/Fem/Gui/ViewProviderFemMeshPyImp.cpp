@@ -1,6 +1,9 @@
 
 #include "PreCompiled.h"
 
+#include <Base/VectorPy.h>
+#include <Base/GeometryPyCXX.h>
+
 #include "Mod/Fem/Gui/ViewProviderFemMesh.h"
 
 // inclusion of the generated files (generated out of ViewProviderFemMeshPy.xml)
@@ -17,10 +20,15 @@ std::string ViewProviderFemMeshPy::representation(void) const
 
 
 
-PyObject* ViewProviderFemMeshPy::animate(PyObject * /*args*/)
+PyObject* ViewProviderFemMeshPy::animate(PyObject * args)
 {
-    PyErr_SetString(PyExc_NotImplementedError, "Not yet implemented");
-    return 0;
+    double factor;
+    if (!PyArg_ParseTuple(args, "d", &factor))
+        return 0;
+
+    this->getViewProviderFemMeshPtr()->animateNodes(factor);
+
+    Py_Return;
 }
 
 
@@ -46,6 +54,32 @@ void ViewProviderFemMeshPy::setNodeColor(Py::Dict arg)
             NodeColorMap[id] = App::Color(Py::Float(color[0]),Py::Float(color[1]),Py::Float(color[2]),0);
         }
         this->getViewProviderFemMeshPtr()->setColorByNodeId(NodeColorMap);
+	}
+}
+
+Py::Dict ViewProviderFemMeshPy::getNodeDisplacement(void) const
+{
+    //return Py::Dict();
+    throw Py::AttributeError("Not yet implemented");
+}
+
+void  ViewProviderFemMeshPy::setNodeDisplacement(Py::Dict arg)
+{
+    if(arg.size() == 0)
+        this->getViewProviderFemMeshPtr()->resetColorByNodeId();
+    else {
+        std::map<long,Base::Vector3d> NodeDispMap;
+        union PyType_Object pyType = {&(Base::VectorPy::Type)};
+        Py::Type vType(pyType.o);
+
+        for( Py::Dict::iterator it = arg.begin(); it!= arg.end();++it){
+            Py::Int id((*it).first);
+            if ((*it).second.isType(vType)) {
+                Py::Vector p((*it).second);
+                NodeDispMap[id] = p.toVector();
+            }
+        }
+        this->getViewProviderFemMeshPtr()->setDisplacementByNodeId(NodeDispMap);
 	}
 }
 
