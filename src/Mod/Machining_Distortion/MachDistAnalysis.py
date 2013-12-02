@@ -319,8 +319,11 @@ class _JobControlTaskPanel:
 
         #Lets generate the surface nodes
         surface_input = open (str(JobDir + "surface_input.txt"),'w')
+        surface_input.write('*Elset, elset=_outer_surface_S1, internal, instance=PART-1-1\n')
         for i in MeshSurfaceFaces:
-            surface_input.write(str(i[0]) +','+str(i[1]) + '\n')
+            if i[1] == 1 :
+                surface_input.write(str(i[0]) +',\n')
+        surface_input.write('*Surface, type=ELEMENT, name=outer_surface\n _outer_surface_S1, S1 \n_outer_surface_S2, S2\n_outer_surface_S4, S4\n_outer_surface_S3, S3\n')
         surface_input.close()
         
         batch = open(str(JobDir + "lcmt_CALCULIX_Calculation_batch.bat"),'w')
