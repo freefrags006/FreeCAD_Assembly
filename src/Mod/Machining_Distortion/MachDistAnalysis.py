@@ -278,12 +278,21 @@ class _JobControlTaskPanel:
         lc4 = float(matmap['PartDist_lc4'])
         lc5 = float(matmap['PartDist_lc5'])
         lc6 = float(matmap['PartDist_lc6'])        
+        if matmap.has_key('PartDist_lc7'):
+            lc7 = matmap['PartDist_lc7']
+        else:
+            lc7 = None
         ltc1 =float(matmap['PartDist_ltc1'])
         ltc2 =float(matmap['PartDist_ltc2'])
         ltc3 =float(matmap['PartDist_ltc3'])
         ltc4 =float(matmap['PartDist_ltc4'])
         ltc5 =float(matmap['PartDist_ltc5'])
         ltc6 =float(matmap['PartDist_ltc6'])
+        if matmap.has_key('PartDist_ltc7'):
+            ltc7 = matmap['PartDist_ltc7']
+        else:
+            ltc7 = None
+            
         young_modulus = float(matmap['FEM_youngsmodulus'])
         poisson_ratio = float(matmap['PartDist_poissonratio'])
         plate_thickness = float(matmap['PartDist_platethickness'])
@@ -306,15 +315,23 @@ class _JobControlTaskPanel:
         str(lc2) + "," + \
         str(lc3) + "," + \
         str(lc4) + "," + \
-        str(lc5) + "," + \
-        str(lc6) + "\n")
+        str(lc5) + "," )
+        if lc7 != None: 
+            sigini_input.write(str(lc6) + ",")
+            sigini_input.write(str(lc7) + "\n")
+        else:
+            sigini_input.write(str(lc6) + "\n")
         sigini_input.write(\
         str(ltc1) + "," + \
         str(ltc2) + "," + \
         str(ltc3) + "," + \
         str(ltc4) + "," + \
-        str(ltc5) + "," + \
-        str(ltc6) + "\n")
+        str(ltc5) + "," )
+        if ltc7!= None: 
+            sigini_input.write(str(ltc6) + ",")
+            sigini_input.write(str(ltc7) + "\n")
+        else:
+            sigini_input.write(str(ltc6) + "\n")
         sigini_input.close()
 
         #Lets generate the surface nodes

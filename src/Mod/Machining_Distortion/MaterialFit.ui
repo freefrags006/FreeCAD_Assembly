@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>314</width>
-    <height>610</height>
+    <width>202</width>
+    <height>628</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -376,6 +376,38 @@
            </property>
           </widget>
          </item>
+         <item row="6" column="0">
+          <widget class="QDoubleSpinBox" name="lc7">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="decimals">
+            <number>7</number>
+           </property>
+           <property name="minimum">
+            <double>-99.999999000000003</double>
+           </property>
+           <property name="maximum">
+            <double>99.999999000000003</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLabel" name="label_21">
+           <property name="text">
+            <string>LC7</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -576,6 +608,38 @@
           <widget class="QLabel" name="label_18">
            <property name="text">
             <string>LTC6</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QDoubleSpinBox" name="ltc7">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="decimals">
+            <number>7</number>
+           </property>
+           <property name="minimum">
+            <double>-99.999999000000003</double>
+           </property>
+           <property name="maximum">
+            <double>99.999999000000003</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLabel" name="label_22">
+           <property name="text">
+            <string>LTC7</string>
            </property>
           </widget>
          </item>

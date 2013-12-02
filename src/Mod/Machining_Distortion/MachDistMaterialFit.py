@@ -52,12 +52,14 @@ else:
                 'PartDist_lc4'              :'0.0',
                 'PartDist_lc5'              :'0.0',
                 'PartDist_lc6'              :'0.0',
+                'PartDist_lc7'              :'0.0',
                 'PartDist_ltc1'             :'0.0',
                 'PartDist_ltc2'             :'0.0',
                 'PartDist_ltc3'             :'0.0',
                 'PartDist_ltc4'             :'0.0',
                 'PartDist_ltc5'             :'0.0',
-                'PartDist_ltc6'             :'0.0'
+                'PartDist_ltc6'             :'0.0',
+                'PartDist_ltc7'             :'0.0'
                 }
                 
 
@@ -212,6 +214,7 @@ else:
             matmap['PartDist_lc4'] = str(self.formUi.lc4.value())
             matmap['PartDist_lc5'] = str(self.formUi.lc5.value())
             matmap['PartDist_lc6'] = str(self.formUi.lc6.value())
+            matmap['PartDist_lc7'] = str(self.formUi.lc7.value())
 
             matmap['PartDist_ltc1'] = str(self.formUi.ltc1.value())
             matmap['PartDist_ltc2'] = str(self.formUi.ltc2.value())
@@ -219,6 +222,7 @@ else:
             matmap['PartDist_ltc4'] = str(self.formUi.ltc4.value())
             matmap['PartDist_ltc5'] = str(self.formUi.ltc5.value())
             matmap['PartDist_ltc6'] = str(self.formUi.ltc6.value())
+            matmap['PartDist_ltc7'] = str(self.formUi.ltc7.value())
             #print matmap
             self.obj.Material = matmap 
 
@@ -237,6 +241,7 @@ else:
             self.formUi.lc4.setValue(float(matmap['PartDist_lc4']))
             self.formUi.lc5.setValue(float(matmap['PartDist_lc5']))
             self.formUi.lc6.setValue(float(matmap['PartDist_lc6']))
+            self.formUi.lc7.setValue(float(matmap['PartDist_lc7']))
 
             self.formUi.ltc1.setValue(float(matmap['PartDist_ltc1']))
             self.formUi.ltc2.setValue(float(matmap['PartDist_ltc2']))
@@ -244,6 +249,7 @@ else:
             self.formUi.ltc4.setValue(float(matmap['PartDist_ltc4']))
             self.formUi.ltc5.setValue(float(matmap['PartDist_ltc5']))
             self.formUi.ltc6.setValue(float(matmap['PartDist_ltc6']))
+            self.formUi.ltc7.setValue(float(matmap['PartDist_ltc7']))
 
 
         def isAllowedAlterSelection(self):
@@ -333,18 +339,20 @@ else:
             self.xmax1 = max(x1)
             #self.xmin2 = min(x2)
             #self.xmax2 = max(x2)
-            self.formUi.lc1.setValue(self.polval1[1])
-            self.formUi.lc2.setValue(self.polval1[2])
-            self.formUi.lc3.setValue(self.polval1[3])
-            self.formUi.lc4.setValue(self.polval1[4])
-            self.formUi.lc5.setValue(self.polval1[5])
+            self.formUi.lc1.setValue(self.polval1[0])
+            self.formUi.lc2.setValue(self.polval1[1])
+            self.formUi.lc3.setValue(self.polval1[2])
+            self.formUi.lc4.setValue(self.polval1[3])
+            self.formUi.lc5.setValue(self.polval1[4])
+            self.formUi.lc6.setValue(self.polval1[5])
             self.formUi.lc6.setValue(self.polval1[6])
 
-            self.formUi.ltc1.setValue(self.polval2[1])
-            self.formUi.ltc2.setValue(self.polval2[2])
-            self.formUi.ltc3.setValue(self.polval2[3])
-            self.formUi.ltc4.setValue(self.polval2[4])
-            self.formUi.ltc5.setValue(self.polval2[5])
+            self.formUi.ltc1.setValue(self.polval2[0])
+            self.formUi.ltc2.setValue(self.polval2[1])
+            self.formUi.ltc3.setValue(self.polval2[2])
+            self.formUi.ltc4.setValue(self.polval2[3])
+            self.formUi.ltc5.setValue(self.polval2[4])
+            self.formUi.ltc6.setValue(self.polval2[5])
             self.formUi.ltc6.setValue(self.polval2[6])
 
 
