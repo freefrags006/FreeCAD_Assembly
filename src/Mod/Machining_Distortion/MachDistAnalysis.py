@@ -323,6 +323,18 @@ class _JobControlTaskPanel:
         for i in MeshSurfaceFaces:
             if i[1] == 1 :
                 surface_input.write(str(i[0]) +',\n')
+        surface_input.write('*Elset, elset=_outer_surface_S2, internal, instance=PART-1-1\n')
+        for i in MeshSurfaceFaces:
+            if i[1] == 2 :
+                surface_input.write(str(i[0]) +',\n')
+        surface_input.write('*Elset, elset=_outer_surface_S3, internal, instance=PART-1-1\n')
+        for i in MeshSurfaceFaces:
+            if i[1] == 3 :
+                surface_input.write(str(i[0]) +',\n')
+        surface_input.write('*Elset, elset=_outer_surface_S4, internal, instance=PART-1-1\n')
+        for i in MeshSurfaceFaces:
+            if i[1] == 4 :
+                surface_input.write(str(i[0]) +',\n')
         surface_input.write('*Surface, type=ELEMENT, name=outer_surface\n _outer_surface_S1, S1 \n_outer_surface_S2, S2\n_outer_surface_S4, S4\n_outer_surface_S3, S3\n')
         surface_input.close()
         
