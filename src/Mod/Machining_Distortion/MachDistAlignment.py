@@ -95,6 +95,9 @@ class _AlignTaskPanel:
         # switch on Bound Box
         #self.obj.ViewObject.BoundingBox = True
         
+        # get the Volume of the Mesh
+        self.MeshVolume = self.obj.FemMesh.Volume
+        
         # calculate eigen transformation and transform the mesh
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
         import Mesh
@@ -168,6 +171,7 @@ class _AlignTaskPanel:
         self.formUi.lineEdit_YS.setText("%f"%b.YLength)
         self.formUi.lineEdit_ZS.setText("%f"%b.ZLength)
         self.formUi.lineEdit_VS.setText("%f"% float(b.XLength*b.YLength*b.ZLength))
+        self.formUi.lineEdit_BuyToFly.setText("%f"% ((self.MeshVolume.Value / float(b.XLength*b.YLength*b.ZLength))*100))
         
     def afterFlip(self):       
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
