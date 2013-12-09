@@ -57,21 +57,37 @@ public:
     Quantity operator -(void) const;
     Quantity operator /(const Quantity &p) const;
     bool operator ==(const Quantity&) const;
+    bool operator < (const Quantity&) const;
     Quantity& operator =(const Quantity&);
     Quantity pow(const Quantity&)const;
     //@}
 
     /// transfer to user prefered unit/potence
-    double getUserPrefered() const { QString dummy; return getUserPrefered(dummy); }
-    double getUserPrefered(QString &unitString) const;
-    std::string getUserString(void)const;
+    QString getUserString(double &factor,QString &unitString)const;
+    QString getUserString(void)const{ // to satisfy GCC
+        double  dummy1;
+        QString dummy2;
+        return getUserString(dummy1,dummy2);
+    }
+    //double getUserPrefered() const { QString dummy; return getUserPrefered(dummy); }
+    //double getUserPrefered(QString &unitString) const;
+    //std::string getUserString(void)const;
 
-    static Quantity parse(const char* buffer);
+    static Quantity parse(const QString &string);
 
+    /// returns the unit of the quantity
 	const Unit & getUnit(void) const{return _Unit;}
+    /// set the unit of the quantity
     void setUnit(const Unit &un){_Unit = un;}
+    /// get the Value of the quantity
 	double getValue(void) const{return _Value;}
+    /// set the value of the quantity
     void setValue(double val){_Value = val;}
+    /** get the Value in a special unit given as quantity.
+      * One can use one of the predifeined quantity units in this class
+      */
+    double getValueAs(const Quantity &)const;
+
 
     /// true if it has a number without a unit
     bool isDimensionless(void)const;
@@ -129,6 +145,8 @@ public:
 	static Quantity Hundredweights; 
 	static Quantity Mile; 
 
+    static Quantity PoundForce;
+
 	static Quantity Newton; 
 	static Quantity KiloNewton; 
 	static Quantity MegaNewton; 
@@ -139,12 +157,17 @@ public:
 	static Quantity MegaPascal; 
 	static Quantity GigaPascal; 
 
+  	static Quantity Torr; 
+  	static Quantity mTorr; 
+  	static Quantity yTorr; 
+
 	static Quantity PSI; 
+	static Quantity KSI; 
 
 	static Quantity Watt; 
 	static Quantity VoltAmpere; 
 
-	static Quantity Joul; 
+	static Quantity Joule; 
 	static Quantity NewtonMeter; 
 	static Quantity VoltAmpereSecond; 
 	static Quantity WattSecond; 
