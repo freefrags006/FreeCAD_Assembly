@@ -105,9 +105,9 @@ class _AlignTaskPanel:
         self.obj.Placement = Mesh.calculateEigenTransform(self.obj.FemMesh.Nodes.values())
         
         # make the first alignment persistent
-        m = Fem.FemMesh(self.obj.FemMesh)
-        m.setTransform(self.obj.Placement)
-        self.obj.FemMesh = m
+        #m = Fem.FemMesh(self.obj.FemMesh)
+        #m.setTransform(self.obj.Placement)
+        self.obj.FemMesh = self.obj.Placement
         self.obj.Placement = FreeCAD.Placement()
         
         # move in the first quandrant and minimize bound box
