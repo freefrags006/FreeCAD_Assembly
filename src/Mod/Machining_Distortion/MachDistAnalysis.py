@@ -356,9 +356,11 @@ class _JobControlTaskPanel:
             surface_input.write('*Surface, type=ELEMENT, name=outer_surface\n _outer_surface_S1, S1 \n_outer_surface_S2, S2\n_outer_surface_S4, S4\n_outer_surface_S3, S3\n')
             surface_input.close()
         
-        batch = open(str(JobDir + "lcmt_CALCULIX_Calculation_batch.bat"),'w')
+        batch = open(str(JobDir + "lcmt_CALCULIX_Calculation_batch.sh"),'w')
         batch.write("#!/bin/bash\n")        
-        batch.write("export CCX_NPROC=4\n")
+        batch.write("export CCX_NPROC=12\n")
+        batch.write("export PATH=$PATH://home/rmjzettl/calculix_testbench/CalculiX/ccx_mortar/\n\n")
+        batch.write("# here goes the case files:\n")
 
         OutStr = "Generate:\n"
         print z_rot_intervall,y_rot_intervall,x_rot_intervall,z_offset_intervall
@@ -423,11 +425,9 @@ class _JobControlTaskPanel:
                         # include the surface nodes
                         if not IsoNodeObject:
                             CaseFile.write("\n\n*INCLUDE, INPUT=" + JobDir + "surface_input.txt\n\n")
-                        # include the material info
-                        CaseFile.write("\n\n*INCLUDE, INPUT=" + JobDir + "sigini_input.txt\n\n")
                         CaseFile.close()
                         #batch.write("cd \"" + str(Case_Dir) + "\"\n")
-                        batch.write("ccx -i " + CasePrefix + "geometry_fe_input\n")
+                        batch.write("CalculiX_MT -i " + CasePrefix + "geometry_fe_input\n")
         
                         l= l + z_rot_intervall
                     k = k + y_rot_intervall
