@@ -35,6 +35,7 @@
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
 #include <Base/Stream.h>
+#include <Base/PlacementPy.h>
 
 #include "FemMeshProperty.h"
 #include "FemMeshPy.h"
@@ -110,8 +111,12 @@ void PropertyFemMesh::setPyObject(PyObject *value)
         FemMeshPy *pcObject = static_cast<FemMeshPy*>(value);
         setValue(*pcObject->getFemMeshPtr());
     }
+    else if (PyObject_TypeCheck(value, &(Base::PlacementPy::Type))) {
+        Base::PlacementPy *pcObject = static_cast<Base::PlacementPy*>(value);
+        transformGeometry(pcObject->getPlacementPtr()->toMatrix());
+    }
     else {
-        std::string error = std::string("type must be 'FemMesh', not ");
+        std::string error = std::string("type must be 'FemMesh' or 'Placement', not ");
         error += value->ob_type->tp_name;
         throw Base::TypeError(error);
     }
