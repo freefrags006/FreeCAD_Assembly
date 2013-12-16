@@ -16,7 +16,7 @@ std::string QuantityPy::representation(void) const
 {
 	std::stringstream ret;
 	ret << getQuantityPtr()->getValue() << " "; 
-	ret << getQuantityPtr()->getUnit().getString();
+	ret << getQuantityPtr()->getUnit().getString().toLatin1().constData();
 
 	return ret.str();
 }
@@ -85,7 +85,7 @@ PyObject* QuantityPy::pow(PyObject * args)
     return 0;
 }
 
-PyObject* QuantityPy::getUserPrefered(PyObject *args)
+PyObject* QuantityPy::getUserPreferred(PyObject *args)
 {
     QString uus;
     double factor;
