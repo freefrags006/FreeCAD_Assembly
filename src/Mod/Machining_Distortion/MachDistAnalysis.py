@@ -151,7 +151,7 @@ class _ViewProviderMachDistAnalysis:
     def doubleClicked(self,vobj):
         import FemGui
         if FemGui.getActiveAnalysis() == None:
-            if FreeCADGui.activeWorkbench() != 'MachiningDistortionWorkbench':
+            if FreeCADGui.activeWorkbench().name() != 'MachiningDistortionWorkbench':
                 FreeCADGui.activateWorkbench("MachiningDistortionWorkbench")
             FemGui.setActiveAnalysis(self.Object)
             return True
