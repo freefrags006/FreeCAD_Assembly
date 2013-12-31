@@ -73,7 +73,7 @@ class ArchWorkbench(Workbench):
                      "Arch_Floor","Arch_Building","Arch_Site",
                      "Arch_Window","Arch_Roof","Arch_Axis",
                      "Arch_SectionPlane","Arch_Space","Arch_Stairs",
-                     "Arch_Add","Arch_Remove"]
+                     "Arch_Frame","Arch_Add","Arch_Remove"]
         self.meshtools = ["Arch_SplitMesh","Arch_MeshToShape",
                      "Arch_SelectNonSolidMeshes","Arch_RemoveShape",
                      "Arch_CloseHoles","Arch_MergeWalls"]
@@ -146,6 +146,7 @@ FreeCADGui.addWorkbench(ArchWorkbench)
 
 # add import/export types
 FreeCAD.addImportType("Industry Foundation Classes (*.ifc)","importIFC")
+FreeCAD.addExportType("Industry Foundation Classes (*.ifc)","importIFC")
 FreeCAD.addExportType("Wavefront OBJ - Arch module (*.obj)","importOBJ")
 FreeCAD.addExportType("WebGL file (*.html)","importWebGL")
 FreeCAD.addImportType("Collada (*.dae)","importDAE")

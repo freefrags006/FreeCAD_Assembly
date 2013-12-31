@@ -302,27 +302,37 @@ def shapify(obj):
     FreeCAD.ActiveDocument.recompute()
     return newobj
 
-def getGroupContents(objectslist,walls=False):
-    '''getGroupContents(objectlist): if any object of the given list
-    is a group, its content is appened to the list, which is returned'''
+def getGroupContents(objectslist,walls=False,addgroups=False):
+    '''getGroupContents(objectlist,[walls,addgroups]): if any object of the given list
+    is a group, its content is appened to the list, which is returned. If walls is True,
+    walls are also scanned for included windows. If addgroups is true, the group itself
+    is also included in the list.'''
     newlist = []
     if not isinstance(objectslist,list):
         objectslist = [objectslist]
     for obj in objectslist:
         if obj.isDerivedFrom("App::DocumentObjectGroup"):
             if obj.isDerivedFrom("Drawing::FeaturePage"):
-                # skip if the grou is a page
+                # skip if the group is a page
                 newlist.append(obj)
             else:
-                newlist.extend(getGroupContents(obj.Group))
+                if addgroups:
+                    newlist.append(obj)
+                newlist.extend(getGroupContents(obj.Group,walls,addgroups))
         else:
+            #print "adding ",obj.Name
             newlist.append(obj)
             if walls:
                 if getType(obj) == "Wall":
                     for o in obj.OutList:
                         if (getType(o) == "Window") or isClone(o,"Window"):
                             newlist.append(o)
-    return newlist
+    # cleaning possible duplicates
+    cleanlist = []
+    for obj in newlist:
+        if not obj in cleanlist:
+            cleanlist.append(obj)
+    return cleanlist
 
 def removeHidden(objectslist):
     """removeHidden(objectslist): removes hidden objects from the list"""
@@ -491,18 +501,20 @@ def loadTexture(filename,size=None):
         from pivy import coin
         from PyQt4 import QtGui,QtSvg
         try:
-            if size and (".svg" in filename.lower()):
-                # this is a pattern, not a texture
-                if isinstance(size,int):
-                    size = (size,size)
-                svgr = QtSvg.QSvgRenderer(filename)
-                p = QtGui.QImage(size[0],size[1],QtGui.QImage.Format_ARGB32)
-                pa = QtGui.QPainter()
-                pa.begin(p)
-                svgr.render(pa)
-                pa.end()
-            else:   
-                p = QtGui.QImage(filename)
+            p = QtGui.QImage(filename)
+            # buggy - TODO: allow to use resolutions
+            #if size and (".svg" in filename.lower()):
+            #    # this is a pattern, not a texture
+            #    if isinstance(size,int):
+            #        size = (size,size)
+            #    svgr = QtSvg.QSvgRenderer(filename)
+            #    p = QtGui.QImage(size[0],size[1],QtGui.QImage.Format_ARGB32)
+            #    pa = QtGui.QPainter()
+            #    pa.begin(p)
+            #    svgr.render(pa)
+            #    pa.end()
+            #else:   
+            #    p = QtGui.QImage(filename)
             size = coin.SbVec2s(p.width(), p.height())
             buffersize = p.numBytes()
             numcomponents = int (buffersize / ( size[0] * size[1] ))
@@ -955,7 +967,7 @@ def makeArray(baseobject,arg1,arg2,arg3,arg4=None,name="Array"):
         obj.Angle = arg2
         obj.NumberPolar = arg3
     if gui:
-        _ViewProviderDraftPart(obj.ViewObject)  
+        _ViewProviderDraftArray(obj.ViewObject)  
         baseobject.ViewObject.hide()
         select(obj)
     return obj
@@ -981,7 +993,7 @@ def makePathArray(baseobject,pathobject,count,xlate=None,align=False,pathobjsubs
         obj.Xlate = xlate
     obj.Align = align
     if gui:
-        _ViewProviderDraftPart(obj.ViewObject)  
+        _ViewProviderDraftArray(obj.ViewObject)  
         baseobject.ViewObject.hide()
         select(obj)
     return obj
@@ -4400,13 +4412,22 @@ class _Clone(_DraftObject):
             obj.Placement = pl
 
 class _ViewProviderClone(_ViewProviderDraftAlt):
-    "a view provider that displays a Part icon instead of a Draft icon"
+    "a view provider that displays a Clone icon instead of a Draft icon"
     
     def __init__(self,vobj):
         _ViewProviderDraftAlt.__init__(self,vobj)
 
     def getIcon(self):
         return ":/icons/Draft_Clone.svg"
+        
+class _ViewProviderDraftArray(_ViewProviderDraft):
+    "a view provider that displays a Array icon instead of a Draft icon"
+    
+    def __init__(self,vobj):
+        _ViewProviderDraft.__init__(self,vobj)
+
+    def getIcon(self):
+        return ":/icons/Draft_Array.svg"
         
 class _ShapeString(_DraftObject):
     "The ShapeString object"
