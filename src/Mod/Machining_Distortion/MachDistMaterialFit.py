@@ -185,7 +185,8 @@ else:
             self.params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Machining_Distortion")
 
 
-            QtCore.QObject.connect(self.formUi.select_file, QtCore.SIGNAL("clicked()"), self.add_fit_data)
+            QtCore.QObject.connect(self.formUi.select_file_fit_LC, QtCore.SIGNAL("clicked()"), self.add_fit_data)
+
             QtCore.QObject.connect(self.formUi.pushButton_SaveMat, QtCore.SIGNAL("clicked()"), self.saveMat)
             QtCore.QObject.connect(self.formUi.toolButton_chooseDir, QtCore.SIGNAL("clicked()"), self.chooseDir)
             QtCore.QObject.connect(self.formUi.comboBox_MaterialsInDir, QtCore.SIGNAL("currentIndexChanged(int)"), self.chooseMat)
