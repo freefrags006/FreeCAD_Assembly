@@ -62,6 +62,12 @@ else:
                 'PartDist_ltc7'             :'0.0'
                 }
                 
+    def is_float_try(str):
+        try:
+            float(str)
+            return True
+        except ValueError:
+            return False                    
 
     def makeMaterialFit(name):
         '''makeMaterial(name): makes an Material
@@ -185,7 +191,11 @@ else:
             self.params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Machining_Distortion")
 
 
-            QtCore.QObject.connect(self.formUi.select_file_fit_LC, QtCore.SIGNAL("clicked()"), self.add_fit_data)
+            QtCore.QObject.connect(self.formUi.select_file_fit_LC, QtCore.SIGNAL("clicked()"), self.add_fit_dataLC)
+            QtCore.QObject.connect(self.formUi.select_file_fit_LTC, QtCore.SIGNAL("clicked()"), self.add_fit_dataLTC)
+
+            QtCore.QObject.connect(self.formUi.select_file_LC, QtCore.SIGNAL("clicked()"), self.add_L_data)
+            QtCore.QObject.connect(self.formUi.select_file_LTC, QtCore.SIGNAL("clicked()"), self.add_LT_data)
 
             QtCore.QObject.connect(self.formUi.pushButton_SaveMat, QtCore.SIGNAL("clicked()"), self.saveMat)
             QtCore.QObject.connect(self.formUi.toolButton_chooseDir, QtCore.SIGNAL("clicked()"), self.chooseDir)
@@ -252,6 +262,48 @@ else:
             self.formUi.ltc6.setValue(float(matmap['PartDist_ltc6']))
             self.formUi.ltc7.setValue(float(matmap['PartDist_ltc7']))
 
+        def add_L_data(self):
+            l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','R-Script File for L Coefficients (*.txt)')
+            values = self.parse_R_output(l_filename)
+            self.formUi.lc1.setValue(values[0])
+            self.formUi.lc2.setValue(values[1])
+            self.formUi.lc3.setValue(values[2])
+            self.formUi.lc4.setValue(values[3])
+            self.formUi.lc5.setValue(values[4])
+            self.formUi.lc6.setValue(values[5])
+            self.formUi.lc7.setEnabled(False) 
+            self.formUi.tabWidget.setCurrentIndex(0)
+            
+            
+        def add_LT_data(self):
+            lt_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','R-Script File for LT Coefficients (*.txt)')
+            values = self.parse_R_output(lt_filename)
+            self.formUi.ltc1.setValue(values[0])
+            self.formUi.ltc2.setValue(values[1])
+            self.formUi.ltc3.setValue(values[2])
+            self.formUi.ltc4.setValue(values[3])
+            self.formUi.ltc5.setValue(values[4])
+            self.formUi.ltc6.setValue(values[5])
+            self.formUi.ltc7.setEnabled(False) 
+            self.formUi.tabWidget.setCurrentIndex(0)
+
+        def parse_R_output(self,filename):
+            file = open(str(filename))
+            lines = file.readlines()
+            found = False
+            coeff = []
+            for line in lines:
+                if line[0:9] == "c0 to c5:":
+                    found = True
+                    coeff.append(float(line[15:]))
+                    continue
+                if found and line[0:4] == "MSE:":
+                    found = False
+                if found:
+                    coeff.append(float(line[15:]))
+            
+            file.close()
+            return coeff[0],coeff[1],coeff[2],coeff[3],coeff[4],coeff[5]
 
         def isAllowedAlterSelection(self):
             return False
@@ -324,15 +376,15 @@ else:
             x2 = []
             y2 = []
 
-            for i in range(self.formUi.tableWidget.rowCount () ):
-                if self.formUi.tableWidget.item(i,0).text() == 'LC':
-                    if self.formUi.tableWidget.cellWidget(i,3).checkState() == 2:
-                        x1.append(float (self.formUi.tableWidget.item(i,1).text()) )
-                        y1.append(float (self.formUi.tableWidget.item(i,2).text()) )
+            for i in range(self.formUi.tableWidget_LC.rowCount () ):
+                if self.formUi.tableWidget_LC.item(i,0).text() == 'LC':
+                    if self.formUi.tableWidget_LC.cellWidget(i,3).checkState() == 2:
+                        x1.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
+                        y1.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
                 else:
-                    if self.formUi.tableWidget.cellWidget(i,3).checkState() == 2:
-                        x2.append(float (self.formUi.tableWidget.item(i,1).text()) )
-                        y2.append(float (self.formUi.tableWidget.item(i,2).text()) )
+                    if self.formUi.tableWidget_LC.cellWidget(i,3).checkState() == 2:
+                        x2.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
+                        y2.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
                
             self.polval1 = polyfit(x1, y1, 6)
             self.polval2 = polyfit(x2, y2, 6)
@@ -346,7 +398,8 @@ else:
             self.formUi.lc4.setValue(self.polval1[3])
             self.formUi.lc5.setValue(self.polval1[4])
             self.formUi.lc6.setValue(self.polval1[5])
-            self.formUi.lc6.setValue(self.polval1[6])
+            self.formUi.lc7.setEnabled(True)
+            self.formUi.lc7.setValue(self.polval1[6])
 
             self.formUi.ltc1.setValue(self.polval2[0])
             self.formUi.ltc2.setValue(self.polval2[1])
@@ -354,7 +407,8 @@ else:
             self.formUi.ltc4.setValue(self.polval2[3])
             self.formUi.ltc5.setValue(self.polval2[4])
             self.formUi.ltc6.setValue(self.polval2[5])
-            self.formUi.ltc6.setValue(self.polval2[6])
+            self.formUi.ltc7.setEnabled(True)
+            self.formUi.ltc7.setValue(self.polval2[6])
 
 
         def updatePlot(self):
@@ -371,44 +425,75 @@ else:
             Plot.plot(newx,newy1,name='LC')
             Plot.plot(newx,newy2,name='LTC')
             
+        def readCSV(self, fileName):
+            inputcsvfile = open(fileName, 'r')
+            r = csv.reader(inputcsvfile)
+            
+            res = {}
+            
+            for row in r:
+                print row
+                if is_float_try(row[1]) and is_float_try(row[2]):
+                    if res.has_key(float(row[2])):
+                        res[float(row[2])] = (res[float(row[2])] + float(row[1]))/2.0
+                    else:
+                        res[float(row[2])] = float(row[1])
                     
+            return res
+            
+        def add_fit_dataLC(self):
+            l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','L file (*.csv)')
+            
+            if l_filename == "": return 
+            
+            res = self.readCSV(l_filename)
+            
+            self.formUi.tableWidget_LC.setRowCount(0)
+            
+            for t in sorted(res.keys()):
+                #print row[0],row[1],row[2]
+                self.formUi.tableWidget_LC.insertRow(0)
+                item = QtGui.QTableWidgetItem('LC')
+                self.formUi.tableWidget_LC.setItem(0,0,item)
+                item = QtGui.QTableWidgetItem(str(res[t]))
+                self.formUi.tableWidget_LC.setItem(0,1,item)
+                item = QtGui.QTableWidgetItem(str(t))
+                self.formUi.tableWidget_LC.setItem(0,2,item)
+                item = QtGui.QCheckBox()
+                item.setChecked(2)
+                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
+                self.formUi.tableWidget_LC.setCellWidget(0,3,item)
                 
-        def add_fit_data(self):
+            self.formUi.tableWidget_LC.resizeColumnsToContents()
+            #Plot.plot(newx,newy)
+            #Plot.figure("Fit diagram")
+            #Plot.getPlot().legend = True
+            #self.formUi.tabWidget.setCurrentIndex(1)
+            #self.updateFit()
+            #self.updatePlot()
+            
+        def add_fit_dataLTC(self):
             l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','LT file (*.csv)')
             
             if l_filename == "": return 
             
-            x = []
-            y = []
-
-            inputcsvfile = open(l_filename, 'r')
-            r = csv.reader(inputcsvfile)
+            res = self.readCSV(l_filename)
             
-            for row in r:
-                if row[0] == '1' or row[0] == '2':
-                    #print row[0],row[1],row[2]
-                    self.formUi.tableWidget.insertRow(0)
-                    if row[0] == '1':
-                        item = QtGui.QTableWidgetItem('LC')
-                    else:
-                        item = QtGui.QTableWidgetItem('LTC')
-                    
-                    self.formUi.tableWidget.setItem(0,0,item)
-                    item = QtGui.QTableWidgetItem(row[1])
-                    self.formUi.tableWidget.setItem(0,1,item)
-                    item = QtGui.QTableWidgetItem(row[2])
-                    self.formUi.tableWidget.setItem(0,2,item)
-                    item = QtGui.QCheckBox()
-                    item.setChecked(2)
-                    QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
-                    self.formUi.tableWidget.setCellWidget(0,3,item)
-                    
-            #Plot.plot(newx,newy)
-            Plot.figure("Fit diagram")
-            Plot.getPlot().legend = True
-            self.formUi.tabWidget.setCurrentIndex(1)
-            self.updateFit()
-            self.updatePlot()
+            self.formUi.tableWidget_LTC.setRowCount(0)
             
+            for t in sorted(res.keys()):
+                #print row[0],row[1],row[2]
+                self.formUi.tableWidget_LTC.insertRow(0)
+                item = QtGui.QTableWidgetItem('LTC')
+                self.formUi.tableWidget_LTC.setItem(0,0,item)
+                item = QtGui.QTableWidgetItem(str(res[t]))
+                self.formUi.tableWidget_LTC.setItem(0,1,item)
+                item = QtGui.QTableWidgetItem(str(t))
+                self.formUi.tableWidget_LTC.setItem(0,2,item)
+                item = QtGui.QCheckBox()
+                item.setChecked(2)
+                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
+                self.formUi.tableWidget_LTC.setCellWidget(0,3,item)
+            self.formUi.tableWidget_LTC.resizeColumnsToContents()    
             
     FreeCADGui.addCommand('MachDist_MaterialFit',_CommandMaterialFit())
