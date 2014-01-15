@@ -108,6 +108,8 @@ class _MachDistAnalysis:
         #obj.Material = StartMat
         obj.addProperty("App::PropertyString","OutputDir","Base","Directory where the jobs get generated")
         obj.addProperty("App::PropertyFloat","PlateThikness","Base","Thikness of the plate")
+        obj.addProperty("App::PropertyInteger","OutputCount","Base","Number of read results")
+        obj.addProperty("App::PropertyStringList","OutputFiles","Base","Number of read results")
 
         
     def execute(self,obj):
@@ -222,6 +224,7 @@ class _JobControlTaskPanel:
         
         MeshObject = None
         MeshSurfaceFaces = []
+        
         if FemGui.getActiveAnalysis():
             for i in FemGui.getActiveAnalysis().Member:
                 if i.isDerivedFrom("Fem::FemMeshObject"):
@@ -362,6 +365,7 @@ class _JobControlTaskPanel:
         batch.write("export PATH=$PATH://home/rmjzettl/calculix_testbench/CalculiX/ccx_mortar/\n\n")
         batch.write("# here goes the case files:\n")
 
+        OutList = []
         OutStr = "Generate:\n"
         print z_rot_intervall,y_rot_intervall,x_rot_intervall,z_offset_intervall
         print z_offset_from,z_offset_intervall,z_offset_to
@@ -401,11 +405,13 @@ class _JobControlTaskPanel:
 
                             continue
 
-                        CasePrefix = JobDir + \
+                        CaseName = \
                         "Case-x_rot"+ str(int(j))+ \
                         "_"+"y_rot"+ str(int(k))+ \
                         "_"+"z_rot"+ str(int(l))+ \
                         "_"+"z_l"+ str(int(i)) + '__'
+                        CasePrefix = JobDir + CaseName
+
                         #if ( os.path.exists(str(Case_Dir)) ):
                         #    os.chdir(str(dirName))
                         #    shutil.rmtree(str(Case_Dir))
@@ -427,12 +433,15 @@ class _JobControlTaskPanel:
                             CaseFile.write("\n\n*INCLUDE, INPUT=" + JobDir + "surface_input.txt\n\n")
                         CaseFile.close()
                         #batch.write("cd \"" + str(Case_Dir) + "\"\n")
-                        batch.write("CalculiX_MT -i " + CasePrefix + "geometry_fe_input\n")
+                        batch.write("CalculiX_MT -i " + CaseName + "geometry_fe_input\n")
         
+                        OutList.append(CaseName + "geometry_fe_input")
                         l= l + z_rot_intervall
                     k = k + y_rot_intervall
                 j = j + x_rot_intervall
             i = i+ z_offset_intervall
+        FemGui.getActiveAnalysis().OutputFiles = OutList
+        FemGui.getActiveAnalysis().OutputCount = len(OutList)
         # set the neutral placement from the beginning
         MeshObject.Placement = FreeCAD.Base.Placement()
     

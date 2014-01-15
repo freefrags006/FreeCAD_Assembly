@@ -30,6 +30,8 @@ SET(MachDist_SRCS
     Ground.ui
     JobControl.ui
     Isostatic.ui
+    ShowDisplacement.ui
+    MachDistPostprocessing.py
 )
 SOURCE_GROUP("" FILES ${MachDist_SRCS})
 
