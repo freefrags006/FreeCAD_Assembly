@@ -206,6 +206,10 @@ else:
             self.xmax1   = None
             self.xmin1   = None
 
+            self.PlotWin = None
+            
+            self.FitDoneL = False
+            self.FitDoneLT = False
 
             self.update()
             
@@ -364,66 +368,94 @@ else:
             for i in self.pathList:
                 self.formUi.comboBox_MaterialsInDir.addItem(os.path.basename(i) )
         
-        def checkChanged(self,index):
+        def checkChangedL(self,index):
             #print "change"
-            self.updateFit()
+            self.updateFitL()
+            self.updatePlot()
+            
+        def checkChangedLT(self,index):
+            #print "change"
+            self.updateFitLT()
             self.updatePlot()
         
-        def updateFit(self):
-            print "update plot" 
+        def updateFitL(self):
+            print "update fit L" 
             x1 = []
             y1 = []
             x2 = []
             y2 = []
 
             for i in range(self.formUi.tableWidget_LC.rowCount () ):
-                if self.formUi.tableWidget_LC.item(i,0).text() == 'LC':
-                    if self.formUi.tableWidget_LC.cellWidget(i,3).checkState() == 2:
-                        x1.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
-                        y1.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
-                else:
-                    if self.formUi.tableWidget_LC.cellWidget(i,3).checkState() == 2:
-                        x2.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
-                        y2.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
-               
-            self.polval1 = polyfit(x1, y1, 6)
-            self.polval2 = polyfit(x2, y2, 6)
-            self.xmin1 = min(x1)
-            self.xmax1 = max(x1)
-            #self.xmin2 = min(x2)
-            #self.xmax2 = max(x2)
-            self.formUi.lc1.setValue(self.polval1[0])
-            self.formUi.lc2.setValue(self.polval1[1])
-            self.formUi.lc3.setValue(self.polval1[2])
-            self.formUi.lc4.setValue(self.polval1[3])
-            self.formUi.lc5.setValue(self.polval1[4])
-            self.formUi.lc6.setValue(self.polval1[5])
-            self.formUi.lc7.setEnabled(True)
-            self.formUi.lc7.setValue(self.polval1[6])
+                if self.formUi.tableWidget_LC.cellWidget(i,3).checkState() == 2:
+                    y1.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
+                    x1.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
+                            
+            if len(y1):
+                self.polval1 = polyfit(x1, y1, 6)
+                self.xmin1 = min(x1)
+                self.xmax1 = max(x1)
+                #self.xmin2 = min(x2)
+                #self.xmax2 = max(x2)
+                self.formUi.lc1.setValue(self.polval1[0])
+                self.formUi.lc2.setValue(self.polval1[1])
+                self.formUi.lc3.setValue(self.polval1[2])
+                self.formUi.lc4.setValue(self.polval1[3])
+                self.formUi.lc5.setValue(self.polval1[4])
+                self.formUi.lc6.setValue(self.polval1[5])
+                self.formUi.lc7.setEnabled(True)
+                self.formUi.lc7.setValue(self.polval1[6])
+            self.FitDoneL = True
+            
+        def updateFitLT(self):
+            print "update fit LT" 
+            x1 = []
+            y1 = []
+            x2 = []
+            y2 = []
+                
+            for i in range(self.formUi.tableWidget_LTC.rowCount () ):
+                if self.formUi.tableWidget_LTC.cellWidget(i,3).checkState() == 2:
+                    y2.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
+                    x2.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
+            
 
-            self.formUi.ltc1.setValue(self.polval2[0])
-            self.formUi.ltc2.setValue(self.polval2[1])
-            self.formUi.ltc3.setValue(self.polval2[2])
-            self.formUi.ltc4.setValue(self.polval2[3])
-            self.formUi.ltc5.setValue(self.polval2[4])
-            self.formUi.ltc6.setValue(self.polval2[5])
-            self.formUi.ltc7.setEnabled(True)
-            self.formUi.ltc7.setValue(self.polval2[6])
-
+            if len(y2):
+                self.polval2 = polyfit(x2, y2, 6)
+                self.formUi.ltc1.setValue(self.polval2[0])
+                self.formUi.ltc2.setValue(self.polval2[1])
+                self.formUi.ltc3.setValue(self.polval2[2])
+                self.formUi.ltc4.setValue(self.polval2[3])
+                self.formUi.ltc5.setValue(self.polval2[4])
+                self.formUi.ltc6.setValue(self.polval2[5])
+                self.formUi.ltc7.setEnabled(True)
+                self.formUi.ltc7.setValue(self.polval2[6])
+            self.FitDoneLT = True
 
         def updatePlot(self):
+            if not self.PlotWin:
+                self.PlotWin = Plot.figure("Fit diagram")
+                self.PlotWin.legend = True
+                
             newx = linspace(self.xmin1,self.xmax1, 100)
             newy1 = []
             newy2 = []
+            
+            
             for i in newx:
-                newy1.append(i**6*self.polval1[0]+i**5*self.polval1[1]+i**4*self.polval1[2]+i**3*self.polval1[3]+i**2*self.polval1[4]+i*self.polval1[5]+self.polval1[6])
-                newy2.append(i**6*self.polval2[0]+i**5*self.polval2[1]+i**4*self.polval2[2]+i**3*self.polval2[3]+i**2*self.polval2[4]+i*self.polval2[5]+self.polval2[6])
+                if self.FitDoneL:
+                    newy1.append(i**6*self.polval1[0]+i**5*self.polval1[1]+i**4*self.polval1[2]+i**3*self.polval1[3]+i**2*self.polval1[4]+i*self.polval1[5]+self.polval1[6])
+                else:
+                    newy1.append(0.0)
+                if self.FitDoneLT:
+                    newy2.append(i**6*self.polval2[0]+i**5*self.polval2[1]+i**4*self.polval2[2]+i**3*self.polval2[3]+i**2*self.polval2[4]+i*self.polval2[5]+self.polval2[6])
+                else:
+                    newy2.append(0.0)
 
             
             Plot.removeSerie(1)
             Plot.removeSerie(0)
-            Plot.plot(newx,newy1,name='LC')
-            Plot.plot(newx,newy2,name='LTC')
+            Plot.plot(newy1,newx,name='LC')
+            Plot.plot(newy2,newx,name='LTC')
             
         def readCSV(self, fileName):
             inputcsvfile = open(fileName, 'r')
@@ -461,16 +493,13 @@ else:
                 self.formUi.tableWidget_LC.setItem(0,2,item)
                 item = QtGui.QCheckBox()
                 item.setChecked(2)
-                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
+                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChangedL)
                 self.formUi.tableWidget_LC.setCellWidget(0,3,item)
                 
             self.formUi.tableWidget_LC.resizeColumnsToContents()
-            #Plot.plot(newx,newy)
-            #Plot.figure("Fit diagram")
-            #Plot.getPlot().legend = True
-            #self.formUi.tabWidget.setCurrentIndex(1)
-            #self.updateFit()
-            #self.updatePlot()
+
+            self.updateFitL()
+            self.updatePlot()
             
         def add_fit_dataLTC(self):
             l_filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file','','LT file (*.csv)')
@@ -492,8 +521,10 @@ else:
                 self.formUi.tableWidget_LTC.setItem(0,2,item)
                 item = QtGui.QCheckBox()
                 item.setChecked(2)
-                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChanged)
+                QtCore.QObject.connect(item, QtCore.SIGNAL("stateChanged(int)"), self.checkChangedLT)
                 self.formUi.tableWidget_LTC.setCellWidget(0,3,item)
             self.formUi.tableWidget_LTC.resizeColumnsToContents()    
+            self.updateFitLT()
+            self.updatePlot()
             
     FreeCADGui.addCommand('MachDist_MaterialFit',_CommandMaterialFit())
