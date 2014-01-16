@@ -86,6 +86,7 @@ class _CommandIsostatic:
     def Activated(self):
         import FemGui
         FreeCAD.ActiveDocument.openTransaction("Isostatic")
+        QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
 
         obj = None
         FemMeshObj = None
@@ -104,6 +105,7 @@ class _CommandIsostatic:
             
         if not obj:
             FreeCADGui.addModule("MachDistIsostatic")
+            FreeCADGui.addModule("FemGui")
             FreeCADGui.doCommand("MachDistIsostatic.makeIsostatic('IsostaticNodes')")
             obj = FreeCAD.activeDocument().ActiveObject
             FreeCADGui.doCommand("FemGui.getActiveAnalysis().Member = FemGui.getActiveAnalysis().Member + [App.activeDocument().ActiveObject]")
@@ -136,10 +138,13 @@ class _CommandIsostatic:
         meshObj.Mesh = aMesh
 
         taskd = _IsostaticTaskPanel(obj,meshObj,FemMeshObj)
-        
+
+        QtGui.qApp.restoreOverrideCursor()
+
         FreeCADGui.Control.showDialog(taskd)
 
     def IsActive(self):
+        import FemGui
         if FemGui.getActiveAnalysis():
             for i in FemGui.getActiveAnalysis().Member:
                 if i.isDerivedFrom("Fem::FemMeshObject"):

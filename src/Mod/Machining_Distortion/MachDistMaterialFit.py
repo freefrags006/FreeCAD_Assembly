@@ -45,7 +45,7 @@ else:
 
     StartMat = {'FEM_youngsmodulus'         :'7000.00',
                 'PartDist_poissonratio'     :'0.30',
-                'PartDist_platethickness'   :'40.0',
+                'PartDist_platethickness'   :'0.0',
                 'PartDist_lc1'              :'0.0',
                 'PartDist_lc2'              :'0.0',
                 'PartDist_lc3'              :'0.0',
@@ -200,6 +200,8 @@ else:
             QtCore.QObject.connect(self.formUi.pushButton_SaveMat, QtCore.SIGNAL("clicked()"), self.saveMat)
             QtCore.QObject.connect(self.formUi.toolButton_chooseDir, QtCore.SIGNAL("clicked()"), self.chooseDir)
             QtCore.QObject.connect(self.formUi.comboBox_MaterialsInDir, QtCore.SIGNAL("currentIndexChanged(int)"), self.chooseMat)
+
+            QtCore.QObject.connect(self.formUi.spinBox_Plate_Thickness, QtCore.SIGNAL("valueChanged(double)"), self.calcBuyToFly)
             
             self.polval1 = None
             self.polval2 = None
@@ -241,15 +243,24 @@ else:
             #print matmap
             self.obj.Material = matmap 
 
-        
+        def calcBuyToFly(self,value):
+            volume = FemGui.getActiveAnalysis().MeshVolume
+            MaxX = FemGui.getActiveAnalysis().PartMaxX
+            MaxY = FemGui.getActiveAnalysis().PartMaxY
+            self.formUi.lineEdit_BuyToFly.setText("%f"%((volume/(MaxX*MaxY*value))*100) + ' %')
+
         def transferFrom(self):
             "Transfer from the object to the dialog"
             matmap = self.obj.Material
             #print matmap
             self.formUi.spinBox_young_modulus.setValue(float(matmap['FEM_youngsmodulus']))
             self.formUi.spinBox_poisson_ratio.setValue(float(matmap['PartDist_poissonratio']))
-            self.formUi.spinBox_Plate_Thickness.setValue(float(matmap['PartDist_platethickness']))
-
+            thickness = float(matmap['PartDist_platethickness'])
+            if thickness < 0.1:
+                thickness = FemGui.getActiveAnalysis().PlateThikness
+            self.formUi.spinBox_Plate_Thickness.setValue(thickness)
+            self.formUi.lineEdit_PartThickness.setText("%f mm"%FemGui.getActiveAnalysis().PartThikness)
+            self.calcBuyToFly(thickness)
             self.formUi.lc1.setValue(float(matmap['PartDist_lc1']))
             self.formUi.lc2.setValue(float(matmap['PartDist_lc2']))
             self.formUi.lc3.setValue(float(matmap['PartDist_lc3']))
@@ -379,7 +390,7 @@ else:
             self.updatePlot()
         
         def updateFitL(self):
-            print "update fit L" 
+            #print "update fit L" 
             x1 = []
             y1 = []
             x2 = []
@@ -407,7 +418,7 @@ else:
             self.FitDoneL = True
             
         def updateFitLT(self):
-            print "update fit LT" 
+            #print "update fit LT" 
             x1 = []
             y1 = []
             x2 = []
@@ -464,7 +475,7 @@ else:
             res = {}
             
             for row in r:
-                print row
+                #print row
                 if is_float_try(row[1]) and is_float_try(row[2]):
                     if res.has_key(float(row[2])):
                         res[float(row[2])] = (res[float(row[2])] + float(row[1]))/2.0

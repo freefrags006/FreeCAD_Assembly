@@ -153,6 +153,7 @@ class MachiningDistortionWorkbench ( Workbench ):
 
 
     def Initialize(self):
+        import FemGui
         import machdist_rc
         import MachiningDistortionCommands
         import MachDistMesh

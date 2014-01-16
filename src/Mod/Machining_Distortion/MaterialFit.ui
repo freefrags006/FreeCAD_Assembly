@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>314</width>
-    <height>777</height>
+    <height>910</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -143,13 +143,36 @@
    <item>
     <layout class="QFormLayout" name="formLayout_5">
      <item row="0" column="0">
-      <widget class="QLabel" name="label_8">
+      <widget class="QLabel" name="label_23">
+       <property name="font">
+        <font>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="text">
-        <string>Plate Thickness:</string>
+        <string>Part thickness:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit_PartThickness">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Plate thickness:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
       <widget class="QDoubleSpinBox" name="spinBox_Plate_Thickness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -173,14 +196,14 @@
         <double>500.000000000000000</double>
        </property>
        <property name="singleStep">
-        <double>5.000000000000000</double>
+        <double>1.000000000000000</double>
        </property>
        <property name="value">
         <double>40.000000000000000</double>
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="label_5">
        <property name="font">
         <font>
@@ -193,7 +216,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QLineEdit" name="lineEdit_BuyToFly">
        <property name="readOnly">
         <bool>true</bool>

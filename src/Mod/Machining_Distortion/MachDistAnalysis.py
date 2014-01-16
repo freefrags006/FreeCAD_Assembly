@@ -106,10 +106,14 @@ class _MachDistAnalysis:
         self.Type = "MachDistAnalysis"
         obj.Proxy = self
         #obj.Material = StartMat
-        obj.addProperty("App::PropertyString","OutputDir","Base","Directory where the jobs get generated")
-        obj.addProperty("App::PropertyFloat","PlateThikness","Base","Thikness of the plate")
-        obj.addProperty("App::PropertyInteger","OutputCount","Base","Number of read results")
-        obj.addProperty("App::PropertyStringList","OutputFiles","Base","Number of read results")
+        obj.addProperty("App::PropertyString","OutputDir","Job","Directory where the jobs get generated")
+        obj.addProperty("App::PropertyInteger","OutputCount","Job","Number of read results")
+        obj.addProperty("App::PropertyStringList","OutputFiles","Job","Number of read results")
+        obj.addProperty("App::PropertyFloat","PlateThikness","Part","Thikness of the plate")
+        obj.addProperty("App::PropertyFloat","PartThikness","Part","Thikness of the part in Z")
+        obj.addProperty("App::PropertyFloat","PartMaxX","Part","Thikness of the part in X")
+        obj.addProperty("App::PropertyFloat","PartMaxY","Part","Thikness of the part in Y")
+        obj.addProperty("App::PropertyFloat","MeshVolume","Part","Volume of the Mesh in mm^2")
 
         
     def execute(self,obj):
@@ -366,9 +370,9 @@ class _JobControlTaskPanel:
         batch.write("# here goes the case files:\n")
 
         OutList = []
-        OutStr = "Generate:\n"
-        print z_rot_intervall,y_rot_intervall,x_rot_intervall,z_offset_intervall
-        print z_offset_from,z_offset_intervall,z_offset_to
+        OutStr = "Generate:"
+        #print z_rot_intervall,y_rot_intervall,x_rot_intervall,z_offset_intervall
+        #print z_offset_from,z_offset_intervall,z_offset_to
         i = z_offset_from
         while i <= z_offset_to:
             j = x_rot_from
@@ -377,7 +381,7 @@ class _JobControlTaskPanel:
                 while k <= y_rot_to:
                     l = z_rot_from
                     while l <= z_rot_to:
-                        OutStr = OutStr + str(j) + "," + str(k) + "," + str(l)
+                        OutStr = OutStr + '\nOffsZ:'+str(i) + '  RX:'+str(j) + "  RY:" + str(k) + "  RZ:" + str(l)
                         self.formUi.textEdit_Output.setText(OutStr)
                         
                         rotation_around_x = FreeCAD.Base.Placement(FreeCAD.Base.Vector(0,0,0),FreeCAD.Base.Vector(1,0,0),j)
@@ -394,13 +398,13 @@ class _JobControlTaskPanel:
                         MeshObject.Placement = p2
                         
                         BndBox = MeshObject.FemMesh.BoundBox
-                        print BndBox.ZMax
-                        print plate_thickness
+                        #print BndBox.ZMax
+                        #print plate_thickness
                         if(BndBox.ZMax > plate_thickness):
-                            print " Too heavy rotations"
-                            print str(plate_thickness)
+                            #print " Too heavy rotations"
+                            #print str(plate_thickness)
                             l= l + z_rot_intervall
-                            OutStr = OutStr + " Too heavy rotations"
+                            OutStr = OutStr + " Outside"
                             self.formUi.textEdit_Output.setText(OutStr)
 
                             continue
@@ -416,8 +420,6 @@ class _JobControlTaskPanel:
                         #    os.chdir(str(dirName))
                         #    shutil.rmtree(str(Case_Dir))
                         
-                        OutStr = OutStr + "\n"
-                        self.formUi.textEdit_Output.setText(OutStr)
                         
                         FreeCADGui.updateGui()
                         #os.mkdir(str(Case_Dir))

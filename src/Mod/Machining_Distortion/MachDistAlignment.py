@@ -124,15 +124,9 @@ class _AlignTaskPanel:
         self.obj.FemMesh = self.obj.Placement
         self.obj.Placement = FreeCAD.Placement()
 
-
-
-
         self.showData()
-
-       
         
         QtGui.qApp.restoreOverrideCursor()
-
 
 
     def getStandardButtons(self):
@@ -172,7 +166,14 @@ class _AlignTaskPanel:
         self.formUi.lineEdit_ZS.setText("%f"%b.ZLength)
         self.formUi.lineEdit_VS.setText("%f"% float(b.XLength*b.YLength*b.ZLength))
         self.formUi.lineEdit_BuyToFly.setText("%f"% ((self.MeshVolume.Value / float(b.XLength*b.YLength*b.ZLength))*100))
-        
+        FemGui.getActiveAnalysis().PartThikness = b.ZLength
+        if round(b.ZLength/5)*5 < b.ZLength:
+            FemGui.getActiveAnalysis().PlateThikness = round(b.ZLength/5)*5 + 5
+        else:
+            FemGui.getActiveAnalysis().PlateThikness = round(b.ZLength/5)*5 
+        FemGui.getActiveAnalysis().MeshVolume = self.MeshVolume.Value
+        FemGui.getActiveAnalysis().PartMaxX = b.XLength
+        FemGui.getActiveAnalysis().PartMaxY = b.YLength
     def afterFlip(self):       
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
         MachDistMoveTools.minimizeBoundVolume(self.obj)
