@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>186</width>
-    <height>416</height>
+    <width>308</width>
+    <height>366</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,22 +23,12 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QRadioButton" name="radioButton_Stress">
-          <property name="text">
-           <string>Stress</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QRadioButton" name="radioButton_Displacement">
           <property name="text">
            <string>Displacement</string>
           </property>
           <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -48,7 +38,7 @@
            <string>No color</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -121,21 +111,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit_Max_3">
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Avg:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEdit_Max_2">
+         <widget class="QLineEdit" name="lineEdit_Min">
           <property name="readOnly">
            <bool>true</bool>
           </property>
@@ -156,7 +132,7 @@
            <string>Show</string>
           </property>
           <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -199,7 +175,7 @@
           <item>
            <widget class="QSpinBox" name="spinBox_SliderFactor">
             <property name="readOnly">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <property name="maximum">
              <number>99999</number>

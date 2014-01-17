@@ -444,6 +444,7 @@ class _JobControlTaskPanel:
             i = i+ z_offset_intervall
         FemGui.getActiveAnalysis().OutputFiles = OutList
         FemGui.getActiveAnalysis().OutputCount = len(OutList)
+        FemGui.getActiveAnalysis().OutputDir = JobDir
         # set the neutral placement from the beginning
         MeshObject.Placement = FreeCAD.Base.Placement()
     

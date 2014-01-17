@@ -56,7 +56,7 @@ def makeMachDistResultStat(name):
 class _CommandReadResults:
     "the MachDist JobControl command definition"
     def GetResources(self):
-        return {'Pixmap'  : 'MachDist_Download',
+        return {'Pixmap'  : 'Fem_Result',
                 'MenuText': QtCore.QT_TRANSLATE_NOOP("MachDist_ReadResults","Read results"),
                 'Accel': "A",
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_ReadResults","Dialog to generate the jobs")}
@@ -160,7 +160,7 @@ class _CommandReadResults:
         StatObject.minY = CminY
         StatObject.maxZ = CmaxZ
         StatObject.minZ = CminZ
-        
+        FreeCAD.activeDocument().recompute()
        
     def IsActive(self):
         import FemGui
@@ -196,7 +196,7 @@ class _ViewProviderMachDistDisplacement:
        
     def getIcon(self):
         import machdist_rc
-        return ":/icons/MachDist_NewAnalysis.svg"
+        return "Fem_Result"
 
 
     def attach(self, vobj):
@@ -212,7 +212,7 @@ class _ViewProviderMachDistDisplacement:
             FemGui.setActiveAnalysis(self.Object)
             return True
             
-        taskd = _ResultControlTaskPanel()
+        taskd = _ResultControlTaskPanel(self.Object)
         taskd.obj = vobj.Object
         taskd.update()
         FreeCADGui.Control.showDialog(taskd)
@@ -312,7 +312,7 @@ class _ResultControlTaskPanel:
         # the panel has a tree widget that contains categories
         # for the subcomponents, such as additions, subtractions.
         # the categories are shown only if they are not empty.
-        form_class, base_class = uic.loadUiType(FreeCAD.getHomePath() + "Mod/Fem/ShowDisplacement.ui")
+        form_class, base_class = uic.loadUiType(FreeCAD.getHomePath() + "Mod/Machining_Distortion/ShowDisplacement.ui")
 
         self.obj = object
         self.formUi = form_class()
@@ -321,7 +321,6 @@ class _ResultControlTaskPanel:
 
         #Connect Signals and Slots
         QtCore.QObject.connect(self.formUi.radioButton_Displacement, QtCore.SIGNAL("clicked(bool)"), self.displacementClicked)
-        QtCore.QObject.connect(self.formUi.radioButton_Stress, QtCore.SIGNAL("clicked(bool)"), self.stressClicked)
         QtCore.QObject.connect(self.formUi.radioButton_NoColor, QtCore.SIGNAL("clicked(bool)"), self.noColorClicked)
         QtCore.QObject.connect(self.formUi.checkBox_ShowDisplacement, QtCore.SIGNAL("clicked(bool)"), self.showDisplacementClicked)
 
@@ -329,9 +328,6 @@ class _ResultControlTaskPanel:
 
         QtCore.QObject.connect(self.formUi.spinBox_SliderFactor, QtCore.SIGNAL("valueChanged(double)"), self.sliderMaxValue)
         QtCore.QObject.connect(self.formUi.spinBox_DisplacementFactor, QtCore.SIGNAL("valueChanged(double)"), self.displacementFactorValue)
-
-        self.DisplacementObject = None
-        self.StressObject = None
 
         self.update()
         
@@ -344,19 +340,13 @@ class _ResultControlTaskPanel:
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.setColorDisplacement()
         QtGui.qApp.restoreOverrideCursor()
-        
-    def stressClicked(self,bool):
-        print 'stressClicked()'
-        QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.setColorStress()
-        QtGui.qApp.restoreOverrideCursor()
-        
+                
     def noColorClicked(self,bool):
         self.MeshObject.ViewObject.NodeColor = {}
-        self.MeshObject.ViewObject.ElementColor = {}
         
     def showDisplacementClicked(self,bool):
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
+        print bool
         self.setDisplacement()
         QtGui.qApp.restoreOverrideCursor()
     
@@ -367,37 +357,32 @@ class _ResultControlTaskPanel:
         self.formUi.spinBox_DisplacementFactor.setValue(value)
 
     def sliderMaxValue(self,value):
-        print 'sliderMaxValue()'
-        self.formUi.verticalScrollBar_Factor.setMaximum(value)
+        print 'sliderMaxValue()',value
+        self.formUi.verticalScrollBar_Factor.setMaxValue(int(value))
         
     def displacementFactorValue(self,value):
         print 'displacementFactorValue()'
         self.formUi.verticalScrollBar_Factor.setValue(value)
         
     def setColorDisplacement(self):
-        if self.DisplacementObject:
-            values = self.DisplacementObject.Values
-            maxL = 0.0
-            for i in values:
-                if i.Length > maxL:
-                    maxL = i.Length
+        if self.obj:
+            values = self.obj.Values
+            maxL = self.obj.max
+            minL = self.obj.min
             
             self.formUi.lineEdit_Max.setText(str(maxL))
+            self.formUi.lineEdit_Min.setText(str(minL))
             self.formUi.doubleSpinBox_MinValueColor.setValue(maxL)
             
-            self.MeshObject.ViewObject.setNodeColorByResult(self.DisplacementObject)
+            self.MeshObject.ViewObject.setNodeColorByResult(self.obj)
             
     def setDisplacement(self):
-        if self.DisplacementObject:
-            self.MeshObject.ViewObject.setNodeDisplacementByResult(self.DisplacementObject)   
-    
-    def setColorStress(self):
-        if self.StressObject:
-            values = self.StressObject.Values
-            maxVal = max(values)
-            self.formUi.doubleSpinBox_MinValueColor.setValue(maxVal)
-            
-            self.MeshObject.ViewObject.setNodeColorByResult(self.StressObject)
+        print 'setDisplacement()', self.formUi.checkBox_ShowDisplacement.isChecked()
+        if self.formUi.checkBox_ShowDisplacement.isChecked():
+            self.MeshObject.ViewObject.setNodeDisplacementByResult(self.obj)
+            self.MeshObject.ViewObject.animate(self.formUi.verticalScrollBar_Factor.value())
+        else:
+            self.MeshObject.ViewObject.animate(0)
 
     def update(self):
         'fills the widgets'
@@ -408,20 +393,17 @@ class _ResultControlTaskPanel:
                 if i.isDerivedFrom("Fem::FemMeshObject"):
                     self.MeshObject = i
 
-        for i in FemGui.getActiveAnalysis().Member:
-            if i.isDerivedFrom("Fem::FemResultVector"):
-                if i.DataType == 'Displacement':
-                    self.DisplacementObject = i
-        for i in FemGui.getActiveAnalysis().Member:
-            if i.isDerivedFrom("Fem::FemResultValue"):
-                if i.DataType == 'VanMisesStress':
-                    self.StressObject = i
-                
+        self.setColorDisplacement()
+        self.setDisplacement()
+        
     def accept(self):
+        self.noColorClicked(False)
         FreeCADGui.Control.closeDialog()
         
                     
     def reject(self):
+        self.noColorClicked(False)
+        self.MeshObject.ViewObject.animate(0)
         FreeCADGui.Control.closeDialog()
     
     
