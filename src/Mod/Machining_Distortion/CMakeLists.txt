@@ -32,6 +32,8 @@ SET(MachDist_SRCS
     Isostatic.ui
     ShowDisplacement.ui
     MachDistPostprocessing.py
+    MachDistPlot.py
+    Statistic.ui
 )
 SOURCE_GROUP("" FILES ${MachDist_SRCS})
 

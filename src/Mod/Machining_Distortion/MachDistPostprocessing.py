@@ -20,8 +20,8 @@
 #*                                                                         *
 #***************************************************************************
 
-import FreeCAD, Fem, CalculixLib ,MachDistMoveTools
-import os,sys,string,math,shutil,glob,subprocess,tempfile
+import FreeCAD, Fem, CalculixLib ,MachDistMoveTools, MachDistPlot
+import os,sys,string,math,shutil,glob,subprocess,tempfile,re
 
 from ApplyingBC_IC  import ApplyingBC_IC
 
@@ -75,6 +75,9 @@ class _CommandReadResults:
         StatObject.Label = 'ResultStatistic'
         FemGui.getActiveAnalysis().Member = FemGui.getActiveAnalysis().Member + [StatObject]
 
+        # regex to extract the three rotations and on Z translation out of the file name
+        pars = re.compile('Case-x_rot([-+]?\d*\.?\d+)_y_rot([-+]?\d*\.?\d+)_z_rot([-+]?\d*\.?\d+)_z_l([-+]?\d*\.?\d+).*',re.IGNORECASE)
+        
         CmaxL = 0.0
         CminL = 100000.0
         CmaxX = 0.0
@@ -84,6 +87,16 @@ class _CommandReadResults:
         CmaxZ = 0.0
         CminZ = 100000.0
        
+        RotXList = []
+        RotYList = []
+        RotZList = []
+        TransZList = []
+
+        MaxList = []
+        MaxXList = []
+        MaxYList = []
+        MaxZList = []
+        
         for filename in ResFileList:
             print filename
             m = CalculixLib.readResult(filename);
@@ -91,6 +104,28 @@ class _CommandReadResults:
             if m.has_key('Displacement'): 
                 disp =  m['Displacement']
                 ResultName = os.path.splitext(os.path.basename(filename))[0]
+                
+                RotX = 0.0
+                RotY = 0.0
+                RotZ = 0.0
+                TransZ = 0.0
+                m = pars.match(ResultName)
+                
+                if m:
+                    g = m.groups()
+                    RotX = float(g[0])
+                    RotY = float(g[1])
+                    RotZ = float(g[2])
+                    TransZ = float(g[3])
+                else:
+                    print "Could not match: ",ResultName
+                RotXList.append(RotX)
+                RotYList.append(RotY)
+                RotZList.append(RotZ)
+                TransZList.append(TransZ)
+    
+                print "Case values: ", RotX,RotY,RotZ,TransZ
+                
                 ResultObject = makeMachDistDisplacement('Displacement')
                 ResultObject.Label = ResultName
                 ResultObject.Values = disp.values()
@@ -133,6 +168,12 @@ class _CommandReadResults:
                 ResultObject.maxZ = maxZ
                 ResultObject.minZ = minZ
                 
+                MaxList.append(maxL)
+                MaxXList.append(maxX)
+                MaxYList.append(maxY)
+                MaxZList.append(maxZ)
+
+                
                 if maxL > CmaxL:
                     CmaxL = maxL
                 if minL < CminL:
@@ -160,6 +201,17 @@ class _CommandReadResults:
         StatObject.minY = CminY
         StatObject.maxZ = CmaxZ
         StatObject.minZ = CminZ
+        
+        StatObject.MaxList = MaxList
+        StatObject.MaxXList = MaxXList
+        StatObject.MaxYList = MaxYList
+        StatObject.MaxZList = MaxZList
+
+        StatObject.RotXList = RotXList
+        StatObject.RotYList = RotYList
+        StatObject.RotZList = RotZList
+        StatObject.TransZList = TransZList
+        
         FreeCAD.activeDocument().recompute()
        
     def IsActive(self):
@@ -242,8 +294,17 @@ class _MachDistResultStat:
         obj.addProperty("App::PropertyFloat","minY","Statistics","min displacement in Y")
         obj.addProperty("App::PropertyFloat","maxZ","Statistics","max displacement in Z")
         obj.addProperty("App::PropertyFloat","minZ","Statistics","min displacement in Z")
-
         
+        obj.addProperty("App::PropertyFloatList","RotXList","Statistics","List of the X-Rotations")
+        obj.addProperty("App::PropertyFloatList","RotYList","Statistics","List of the Y-Rotations")
+        obj.addProperty("App::PropertyFloatList","RotZList","Statistics","List of the Z-Rotations")
+        obj.addProperty("App::PropertyFloatList","TransZList","Statistics","List of the Z-Translation")
+        
+        obj.addProperty("App::PropertyFloatList","MaxList","Statistics","List of the maximum discplacment value")
+        obj.addProperty("App::PropertyFloatList","MaxXList","Statistics","List of the maximum discplacment value in X")
+        obj.addProperty("App::PropertyFloatList","MaxYList","Statistics","List of the maximum discplacment value in Y")
+        obj.addProperty("App::PropertyFloatList","MaxZList","Statistics","List of the maximum discplacment value in Z")
+       
     def execute(self,obj):
         return
         
@@ -290,8 +351,7 @@ class _ViewProviderMachDistResultStat:
             FemGui.setActiveAnalysis(self.Object)
             return True
             
-        taskd = _JobControlTaskPanel()
-        taskd.obj = vobj.Object
+        taskd = _StatisticTaskPanel(self.Object)
         taskd.update()
         FreeCADGui.Control.showDialog(taskd)
         return True
@@ -330,8 +390,6 @@ class _ResultControlTaskPanel:
         QtCore.QObject.connect(self.formUi.spinBox_DisplacementFactor, QtCore.SIGNAL("valueChanged(double)"), self.displacementFactorValue)
 
         self.update()
-        
-
 
     def getStandardButtons(self):
         return int(QtGui.QDialogButtonBox.Close)
@@ -406,6 +464,45 @@ class _ResultControlTaskPanel:
         self.MeshObject.ViewObject.animate(0)
         FreeCADGui.Control.closeDialog()
     
-    
+class _StatisticTaskPanel:
+    '''The control for the displacement post-processing'''
+    def __init__(self,object):
+        # the panel has a tree widget that contains categories
+        # for the subcomponents, such as additions, subtractions.
+        # the categories are shown only if they are not empty.
+        form_class, base_class = uic.loadUiType(FreeCAD.getHomePath() + "Mod/Machining_Distortion/Statistic.ui")
+
+        self.obj = object
+        self.formUi = form_class()
+        self.form = QtGui.QWidget()
+        self.formUi.setupUi(self.form)
+
+        #Connect Signals and Slots
+        #QtCore.QObject.connect(self.formUi.radioButton_Displacement, QtCore.SIGNAL("clicked(bool)"), self.displacementClicked)
+        #QtCore.QObject.connect(self.formUi.radioButton_NoColor, QtCore.SIGNAL("clicked(bool)"), self.noColorClicked)
+        #QtCore.QObject.connect(self.formUi.checkBox_ShowDisplacement, QtCore.SIGNAL("clicked(bool)"), self.showDisplacementClicked)
+
+        #QtCore.QObject.connect(self.formUi.verticalScrollBar_Factor, QtCore.SIGNAL("valueChanged(int)"), self.sliderValue)
+
+        #QtCore.QObject.connect(self.formUi.spinBox_SliderFactor, QtCore.SIGNAL("valueChanged(double)"), self.sliderMaxValue)
+        #QtCore.QObject.connect(self.formUi.spinBox_DisplacementFactor, QtCore.SIGNAL("valueChanged(double)"), self.displacementFactorValue)
+
+        self.update()
+
+    def getStandardButtons(self):
+        return int(QtGui.QDialogButtonBox.Close)
+        
+
+    def update(self):
+        'fills the widgets'
+        print "update(self) ToDo" 
+        
+    def accept(self):
+        FreeCADGui.Control.closeDialog()
+        
+                    
+    def reject(self):
+        FreeCADGui.Control.closeDialog()
+        
     
 FreeCADGui.addCommand('MachDist_ReadResult',_CommandReadResults())
