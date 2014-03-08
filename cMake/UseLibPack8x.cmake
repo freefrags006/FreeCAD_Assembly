@@ -316,16 +316,77 @@ set(OPENCV_FOUND TRUE)
 # NGLIB (NetGen)
 
 set(NGLIB_INCLUDE_DIR ${FREECAD_LIBPACK_DIR}/include/nglib/Include)
-set(NGLIB_LIBRARY_DIR
-    ${FREECAD_LIBPACK_DIR}/lib
-)
+
+set(NGLIB_LIBRARY_DIR ${FREECAD_LIBPACK_DIR}/lib )
+
 set(NGLIB_LIBRARIES
 	optimized nglib
 )
+
 set(NGLIB_DEBUG_LIBRARIES
 	debug nglibd
 )
 
+# PCL the PointCloudsLibray
+
+set(PCL_INCLUDE_DIRS
+    ${FREECAD_LIBPACK_DIR}/include/pcl
+    ${FREECAD_LIBPACK_DIR}/include/sensor_msgs
+    #${FREECAD_LIBPACK_DIR}/include/pcl/common
+    #${FREECAD_LIBPACK_DIR}/include/pcl/surface
+    #${FREECAD_LIBPACK_DIR}/include/pcl/io
+    #${FREECAD_LIBPACK_DIR}/include/pcl/ply
+)
+set(PCL_LIBRARY_DIR
+    ${FREECAD_LIBPACK_DIR}/lib
+)
+
+set(PCL_COMMON_LIBRARIES
+    optimized   pcl_common_release
+    debug       pcl_common_debug
+)
+set(PCL_KDTREE_LIBRARIES
+    optimized   pcl_kdtree_release
+    debug       pcl_kdtree_debug
+)
+set(PCL_FEATURES_LIBRARIES
+    optimized   pcl_features_release
+    debug       pcl_features_debug
+)
+set(PCL_SURFACE_LIBRARIES
+    optimized   pcl_surface_release
+    debug       pcl_surface_debug
+)
+set(PCL_SEARCH_LIBRARIES
+    optimized   pcl_search_release
+    debug       pcl_search_debug
+)
+
+set(PCL_IO_LIBRARIES
+    optimized   pcl_io_release
+    debug       pcl_io_debug
+)
+
+set(PCL_LIBRARIES
+    optimized   pcl_common_release
+    optimized   pcl_io_release
+    optimized   pcl_kdtree_release
+    #optimized   pcl_octree_release
+    optimized   pcl_features_release
+    optimized   flann_cpp_s
+)
+
+
+set(PCL_DEBUG_LIBRARIES
+    debug     pcl_common_debug
+    debug     pcl_io_debug
+    debug     pcl_kdtree_debug
+    #debug     pcl_octree_debug
+    debug     pcl_features_debug
+    debug     flann_cpp_s-gd
+)
+
+set(PCL_FOUND TRUE) 
 
 
 # OCC
