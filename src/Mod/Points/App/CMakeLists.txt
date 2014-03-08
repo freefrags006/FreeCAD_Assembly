@@ -67,3 +67,4 @@ else(MSVC)
 endif(MSVC)
 
 INSTALL(TARGETS Points DESTINATION lib)
+
