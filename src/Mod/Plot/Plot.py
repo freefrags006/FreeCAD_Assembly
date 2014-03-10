@@ -70,6 +70,21 @@ def getPlot():
 			return i
 	return None
 
+def closePlot():
+	""" getPlot(): Gets selected Plot document if exist. """
+	# Get active tab
+	mdi = getMdiArea()
+	if not mdi:
+		return None
+	sub = mdi.activeSubWindow()
+	if not sub:
+		return None
+	# Explore childrens looking for Plot class
+	for i in sub.children():
+		if i.metaObject().className() == "Plot":
+			sub.close()
+	
+
 def figure(winTitle="plot"):
 	""" figure(winTitle="plot"): Create a new plot subwindow.\n winTitle = Tab title. """
 	mdi = getMdiArea()
