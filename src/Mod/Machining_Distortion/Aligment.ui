@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>173</width>
-    <height>323</height>
+    <height>297</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,6 +85,9 @@
       <string>Volume</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="font">
@@ -160,26 +163,6 @@
       </item>
       <item row="3" column="1">
        <widget class="QLineEdit" name="lineEdit_VS">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>BuyToFly:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QLineEdit" name="lineEdit_BuyToFly">
         <property name="readOnly">
          <bool>true</bool>
         </property>

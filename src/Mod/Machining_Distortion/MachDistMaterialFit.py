@@ -88,11 +88,16 @@ else:
                     'ToolTip': QtCore.QT_TRANSLATE_NOOP("MachDist_Material","Creates or edit the material definition.")}
             
         def Activated(self):
+            
+            if FemGui.getActiveAnalysis().PartMaxX < 0.01:
+                QtGui.QMessageBox.critical(None, "Missing prerequisit","Do first a Part-Aligment!")
+                return 
+                
             MatObj = None
             for i in FemGui.getActiveAnalysis().Member:
                 if i.isDerivedFrom("App::MaterialObject"):
                         MatObj = i
-
+            
             if (not MatObj):
                 FreeCAD.ActiveDocument.openTransaction("Create MaterialFit")
                 FreeCADGui.addModule("MachDistMaterialFit")
@@ -223,7 +228,7 @@ else:
             matmap['FEM_youngsmodulus']       = str(self.formUi.spinBox_young_modulus.value())
             matmap['PartDist_poissonratio']   = str(self.formUi.spinBox_poisson_ratio.value())
             matmap['PartDist_platethickness'] = str(self.formUi.spinBox_Plate_Thickness.value())
-
+            FemGui.getActiveAnalysis().PlateThikness = self.formUi.spinBox_Plate_Thickness.value()
 
             matmap['PartDist_lc1'] = str(self.formUi.lc1.value())
             matmap['PartDist_lc2'] = str(self.formUi.lc2.value())
@@ -243,11 +248,19 @@ else:
             #print matmap
             self.obj.Material = matmap 
 
+        def update(self):
+            'fills the widgets'
+            self.transferFrom()
+            self.fillMaterialCombo()
+            self.calcBuyToFly(FemGui.getActiveAnalysis().PlateThikness)
+
         def calcBuyToFly(self,value):
             volume = FemGui.getActiveAnalysis().MeshVolume
             MaxX = FemGui.getActiveAnalysis().PartMaxX
             MaxY = FemGui.getActiveAnalysis().PartMaxY
-            self.formUi.lineEdit_BuyToFly.setText("%f"%((volume/(MaxX*MaxY*value))*100) + ' %')
+            BuyToFly = (volume/(MaxX*MaxY*value))*100
+            self.formUi.lineEdit_BuyToFly.setText("%f"%BuyToFly + ' %')
+            #print "calcBuyToFly ",MaxX,MaxY,value,volume,BuyToFly
 
         def transferFrom(self):
             "Transfer from the object to the dialog"
@@ -255,10 +268,11 @@ else:
             #print matmap
             self.formUi.spinBox_young_modulus.setValue(float(matmap['FEM_youngsmodulus']))
             self.formUi.spinBox_poisson_ratio.setValue(float(matmap['PartDist_poissonratio']))
-            thickness = float(matmap['PartDist_platethickness'])
-            if thickness < 0.1:
-                thickness = FemGui.getActiveAnalysis().PlateThikness
+            #thickness = float(matmap['PartDist_platethickness'])
+            #if thickness < 0.1:
+            thickness = FemGui.getActiveAnalysis().PlateThikness
             self.formUi.spinBox_Plate_Thickness.setValue(thickness)
+           
             self.formUi.lineEdit_PartThickness.setText("%f mm"%FemGui.getActiveAnalysis().PartThikness)
             self.calcBuyToFly(thickness)
             self.formUi.lc1.setValue(float(matmap['PartDist_lc1']))
@@ -329,19 +343,14 @@ else:
         def getStandardButtons(self):
             return int(QtGui.QDialogButtonBox.Ok) | int(QtGui.QDialogButtonBox.Cancel)
         
-        def update(self):
-            'fills the widgets'
-            self.transferFrom()
-            self.fillMaterialCombo()
-
-
-            return 
                     
         def accept(self):
             self.transferTo()
+            Plot.closePlot()
             FreeCADGui.ActiveDocument.resetEdit()
                         
         def reject(self):
+            Plot.closePlot()
             FreeCADGui.ActiveDocument.resetEdit()
 
         def saveMat(self):
@@ -426,8 +435,8 @@ else:
                 
             for i in range(self.formUi.tableWidget_LTC.rowCount () ):
                 if self.formUi.tableWidget_LTC.cellWidget(i,3).checkState() == 2:
-                    y2.append(float (self.formUi.tableWidget_LC.item(i,1).text()) )
-                    x2.append(float (self.formUi.tableWidget_LC.item(i,2).text()) )
+                    y2.append(float (self.formUi.tableWidget_LTC.item(i,1).text()) )
+                    x2.append(float (self.formUi.tableWidget_LTC.item(i,2).text()) )
             
 
             if len(y2):

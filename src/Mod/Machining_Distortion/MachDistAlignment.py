@@ -53,6 +53,11 @@ class _CommandAlignment:
                     FemMeshObject = i
                     break
         else:
+            QtGui.QMessageBox.critical(None, "Missing prerequisit","No active Analysis")
+            return 
+            
+        if FemMeshObject == None:
+            QtGui.QMessageBox.critical(None, "Missing prerequisit","First insert a Part!")
             return 
         FreeCAD.ActiveDocument.openTransaction("Alignment")
         
@@ -96,7 +101,7 @@ class _AlignTaskPanel:
         #self.obj.ViewObject.BoundingBox = True
         
         # get the Volume of the Mesh
-        self.MeshVolume = self.obj.FemMesh.Volume
+        self.MeshVolume = self.obj.FemMesh.Volume.Value
         
         # calculate eigen transformation and transform the mesh
         QtGui.qApp.setOverrideCursor(QtCore.Qt.WaitCursor)
@@ -165,13 +170,13 @@ class _AlignTaskPanel:
         self.formUi.lineEdit_YS.setText("%f"%b.YLength)
         self.formUi.lineEdit_ZS.setText("%f"%b.ZLength)
         self.formUi.lineEdit_VS.setText("%f"% float(b.XLength*b.YLength*b.ZLength))
-        self.formUi.lineEdit_BuyToFly.setText("%f"% ((self.MeshVolume.Value / float(b.XLength*b.YLength*b.ZLength))*100))
+        #self.formUi.lineEdit_BuyToFly.setText("%f"% ((self.MeshVolume.Value / float(b.XLength*b.YLength*b.ZLength))*100))
         FemGui.getActiveAnalysis().PartThikness = b.ZLength
         if round(b.ZLength/5)*5 < b.ZLength:
             FemGui.getActiveAnalysis().PlateThikness = round(b.ZLength/5)*5 + 5
         else:
             FemGui.getActiveAnalysis().PlateThikness = round(b.ZLength/5)*5 
-        FemGui.getActiveAnalysis().MeshVolume = self.MeshVolume.Value
+        FemGui.getActiveAnalysis().MeshVolume = self.MeshVolume
         FemGui.getActiveAnalysis().PartMaxX = b.XLength
         FemGui.getActiveAnalysis().PartMaxY = b.YLength
     def afterFlip(self):       

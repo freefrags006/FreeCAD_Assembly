@@ -180,6 +180,8 @@ class MachiningDistortionWorkbench ( Workbench ):
     def Activated(self):
         self.setWatchers()
         FreeCADGui.Control.showTaskView()
+        if App.ActiveDocument == None:
+            App.newDocument()
         Msg("PartDistortionWorkbench::Activated()\n")
         
     def Deactivated(self):

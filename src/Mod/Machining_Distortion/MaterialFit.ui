@@ -193,7 +193,7 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
        <property name="maximum">
-        <double>500.000000000000000</double>
+        <double>500000.000000000000000</double>
        </property>
        <property name="singleStep">
         <double>1.000000000000000</double>
