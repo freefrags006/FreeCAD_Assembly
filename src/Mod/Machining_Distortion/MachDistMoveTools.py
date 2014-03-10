@@ -42,6 +42,7 @@ def getBoundBoxVolume(obj):
     return b.XLength * b.YLength * b.ZLength
 
 def minimizeBoundVolume(obj):
+    print "MoveTool"
     p = obj.Placement
     VolOld = getBoundBoxVolume(obj)
     OverallSteps = 0
@@ -57,7 +58,7 @@ def minimizeBoundVolume(obj):
                     i = i+1
                     if(NewVol>VolOld):
                         Better = False
-                        print "Axis: (",v[0],v[1],v[2],") Angle: ",a*dir," -> End with after ",i," Steps with V=",NewVol
+                        #print "Axis: (",v[0],v[1],v[2],") Angle: ",a*dir," -> End with after ",i," Steps with V=",NewVol
                     VolOld = NewVol
                 OverallSteps = OverallSteps + i
     print "OverallSteps: ",OverallSteps

@@ -193,6 +193,9 @@ class _AlignTaskPanel:
         if(self.formUi.checkBox_AutoMinimize.isChecked()):
             MachDistMoveTools.minimizeBoundVolume(self.obj)
             MachDistMoveTools.moveHome(self.obj)
+        self.obj.FemMesh = self.obj.Placement
+        self.obj.Placement = FreeCAD.Placement()
+
         self.showData()
         QtGui.qApp.restoreOverrideCursor()
                     
@@ -205,6 +208,8 @@ class _AlignTaskPanel:
         if(self.formUi.checkBox_AutoMinimize.isChecked()):
             MachDistMoveTools.minimizeBoundVolume(self.obj)
             MachDistMoveTools.moveHome(self.obj)
+        self.obj.FemMesh = self.obj.Placement
+        self.obj.Placement = FreeCAD.Placement()
         self.showData()
         QtGui.qApp.restoreOverrideCursor()
            
@@ -217,6 +222,8 @@ class _AlignTaskPanel:
         if(self.formUi.checkBox_AutoMinimize.isChecked()):
             MachDistMoveTools.minimizeBoundVolume(self.obj)
             MachDistMoveTools.moveHome(self.obj)
+        self.obj.FemMesh = self.obj.Placement
+        self.obj.Placement = FreeCAD.Placement()
         self.showData()
         QtGui.qApp.restoreOverrideCursor()
                   
