@@ -85,7 +85,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void toggleGridView(bool on);
-    void setGridSize(const QString& val);
+    void setGridSize(double val);
     void toggleGridSnap(int state);
     void toggleAutoconstraints(int state);
 
