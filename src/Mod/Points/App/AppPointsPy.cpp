@@ -39,6 +39,10 @@
 #include "PointsAlgos.h"
 #include "FeaturePointsImportAscii.h"
 
+#include <pcl/io/ply_io.h>
+#include <sensor_msgs/PointCloud2.h>
+
+
 using namespace Points;
 
 /* module functions */
@@ -132,11 +136,47 @@ show(PyObject *self, PyObject *args)
     Py_Return;
 }
 
+static PyObject *
+importPly(PyObject *self, PyObject *args)
+{
+    const char* Name;
+    if (!PyArg_ParseTuple(args, "s",&Name))
+        return NULL;
+
+    PY_TRY {
+        Base::Console().Log("Import Ply Points with %s",Name);
+        Base::FileInfo file(Name);
+
+        // extract ending
+        if (file.extension() == "")
+            Py_Error(PyExc_Exception,"no file ending");
+
+        if (file.hasExtension("ply")) {
+            // add Import feature
+            pcl::PLYReader              reader;
+            sensor_msgs::PointCloud2    cloud;
+            Eigen::Vector4f             origin;
+            Eigen::Quaternionf          orientation;
+            int                         ply_version;
+
+            int ret = reader.read (std::string (Name),cloud, origin,orientation, ply_version);
+
+            Base::Console().Log("Import done!");
+
+        }else {
+            Py_Error(PyExc_Exception,"unknown file ending");
+        }
+    } PY_CATCH;
+
+    Py_Return;
+}
+
 // registration table  
 struct PyMethodDef Points_Import_methods[] = {
     {"open",  open,   1},				/* method name, C func ptr, always-tuple */
     {"insert",insert, 1},
     {"show",show, 1},
+    {"importPly",importPly, 1},
 
     {NULL, NULL}                /* end of table marker */
 };
