@@ -208,6 +208,13 @@ void Gui::GUIApplicationNativeEventAware::Move3d(HANDLE device, std::vector<floa
     motionEvent->setTranslations(motionDataArray[0], motionDataArray[1], motionDataArray[2]);
     motionEvent->setRotations(motionDataArray[3], motionDataArray[4], motionDataArray[5]);
 
+    Base::Console().Message("GUIApplicationNativeEventAware::Move3d:\n");
+    if (currentWidget) {
+        const char* cname = currentWidget->metaObject()->className();
+        Base::Console().Message("Send motion event to widget: %s\n", cname);
+        for (int i=0; i<6;i++)
+            Base::Console().Message("motionEvent[%d]: %d\n", i, motionDataArray[i]);
+    }
     this->postEvent(currentWidget, motionEvent);
 }
 
@@ -289,6 +296,7 @@ bool Gui::GUIApplicationNativeEventAware::Is3dmouseAttached()
 		return false;
 	}
 
+    Base::Console().Message("    Total number of found devices: %d\n", nDevices);
 	for (unsigned int i = 0; i < nDevices; ++i) {
 		RID_DEVICE_INFO rdi = {sizeof(rdi)};
 		unsigned int cbSize = sizeof(rdi);
@@ -299,10 +307,13 @@ bool Gui::GUIApplicationNativeEventAware::Is3dmouseAttached()
 				continue;
 			}
 
+            Base::Console().Message("    Logitech device: HID: %d, VID: %d\n", RIM_TYPEHID, LOGITECH_VENDOR_ID);
+
 			//check if devices matches Multi-axis Controller
 			for (unsigned int j = 0; j < numDevicesOfInterest; ++j) {
 				if (devicesToRegister[j].usUsage == rdi.hid.usUsage
 						&& devicesToRegister[j].usUsagePage == rdi.hid.usUsagePage) {
+                    Base::Console().Message("    Multi-axis Controller found: Usage: %d, Usage page: %d\n", rdi.hid.usUsage, rdi.hid.usUsagePage);
 					return true;
 				}
 			}
@@ -408,6 +419,7 @@ UINT Gui::GUIApplicationNativeEventAware::GetRawInputBuffer(PRAWINPUT pData, PUI
 
 void Gui::GUIApplicationNativeEventAware::On3dmouseInput()
 {
+    Base::Console().Message("Call of GUIApplicationNativeEventAware::On3dmouseInput()\n");
 	// Don't do any data processing in background
 	bool bIsForeground = (::GetActiveWindow() != NULL);
 	if (!bIsForeground) {
@@ -417,6 +429,13 @@ void Gui::GUIApplicationNativeEventAware::On3dmouseInput()
 			it->second.fIsDirty = true;
 		}
 	}
+
+    if (bIsForeground) {
+        Base::Console().Message("Event is triggered in foreground\n");
+    }
+    else {
+        Base::Console().Message("Event is triggered in background\n");
+    }
 
 	DWORD dwNow = ::GetTickCount();           // Current time;
 	DWORD dwElapsedTime;                      // Elapsed time since we were last here
@@ -547,6 +566,7 @@ void Gui::GUIApplicationNativeEventAware::OnRawInput(UINT nInputCode, HRAWINPUT 
 	UINT cbSize = cbSizeOfBuffer;
 
 	if (::GetRawInputData(hRawInput, RID_INPUT, pRawInput, &cbSize, sizeof(RAWINPUTHEADER)) == static_cast<UINT>(-1)) {
+        Base::Console().Message("Wrong input event\n");
 		return;
 	}
 
@@ -578,6 +598,9 @@ void Gui::GUIApplicationNativeEventAware::OnRawInput(UINT nInputCode, HRAWINPUT 
 	if (b3dmouseInput) {
 		On3dmouseInput();
 	}
+    else {
+        Base::Console().Message("No input event for Spaceball\n");
+    }
 }
 
 

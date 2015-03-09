@@ -82,20 +82,29 @@ void Gui::GUIApplicationNativeEventAware::initSpaceball(QMainWindow *window)
 #endif
 
 #ifdef _USE_3DCONNEXION_SDK
+    Base::Console().Message("=== Initialize Spaceball using 3DConnexion SDK ===\n");
     spaceballPresent = Is3dmouseAttached();
+    if (spaceballPresent)
+        Base::Console().Message("    Found a Spaceball\n");
+    else
+        Base::Console().Message("    Could not find a Spaceball\n");
 
     if (spaceballPresent) {
         fLast3dmouseInputTime = 0;
 
         if (InitializeRawInput(mainWindow->winId())){
+            Base::Console().Message("    InitializeRawInput succeeded\n");
             gMouseInput = this;
             qApp->setEventFilter(Gui::GUIApplicationNativeEventAware::RawInputEventFilter);
         }
+        else
+            Base::Console().Message("    InitializeRawInput failed\n");
     }
 #endif // _USE_3DCONNEXION_SDK
 
     Spaceball::MotionEvent::MotionEventType = QEvent::registerEventType();
     Spaceball::ButtonEvent::ButtonEventType = QEvent::registerEventType();
+    Base::Console().Message("=== Finished ===\n");
 }
 
 bool Gui::GUIApplicationNativeEventAware::processSpaceballEvent(QObject *object, QEvent *event)
