@@ -144,9 +144,145 @@ unsigned short HidToVirtualKey(unsigned long pid, unsigned short hidKeyCode)
    return virtualkey;
 }
 
+std::string getEventType(unsigned int id)
+{
+    std::string str;
+    switch (id) {
+    case WM_INPUT:
+        str = "WM_INPUT";
+        break;
+    case WM_PAINT:
+        str = "WM_PAINT";
+        break;
+    case WM_NCPAINT:
+        str = "WM_NCPAINT";
+        break;
+    case WM_IME_SETCONTEXT:
+        str = "WM_IME_SETCONTEXT";
+        break;
+    case WM_WINDOWPOSCHANGING:
+        str = "WM_WINDOWPOSCHANGING";
+        break;
+    case WM_WINDOWPOSCHANGED:
+        str = "WM_WINDOWPOSCHANGED";
+        break;
+    case WM_GETMINMAXINFO:
+        str = "WM_GETMINMAXINFO";
+        break;
+    case WM_ACTIVATEAPP:
+        str = "WM_ACTIVATEAPP";
+        break;
+    case WM_TIMER:
+        str = "WM_TIMER";
+        break;
+    case WM_NCHITTEST:
+        str = "WM_NCHITTEST";
+        break;
+    case WM_LBUTTONDOWN:
+        str = "WM_LBUTTONDOWN";
+        break;
+    case WM_LBUTTONUP:
+        str = "WM_LBUTTONUP";
+        break;
+    case WM_MOUSEMOVE:
+        str = "WM_MOUSEMOVE";
+        break;
+    case WM_ERASEBKGND:
+        str = "WM_ERASEBKGND";
+        break;
+    case WM_NCMOUSELEAVE:
+        str = "WM_NCMOUSELEAVE";
+        break;
+    case WM_MOUSELEAVE:
+        str = "WM_MOUSELEAVE";
+        break;
+    case WM_SETCURSOR:
+        str = "WM_SETCURSOR";
+        break;
+    case WM_SETICON:
+        str = "WM_SETICON";
+        break;
+    case WM_GETICON:
+        str = "WM_GETICON";
+        break;
+    case WM_CAPTURECHANGED:
+        str = "WM_CAPTURECHANGED";
+        break;
+    case WM_SIZE:
+        str = "WM_SIZE";
+        break;
+    case WM_SHOWWINDOW:
+        str = "WM_SHOWWINDOW";
+        break;
+    case WM_NCCREATE:
+        str = "WM_NCCREATE";
+        break;
+    case WM_IME_REQUEST:
+        str = "WM_IME_REQUEST";
+        break;
+    case WM_DRAWCLIPBOARD:
+        str = "WM_DRAWCLIPBOARD";
+        break;
+    case WM_SETFOCUS:
+        str = "WM_SETFOCUS";
+        break;
+    case WM_KILLFOCUS:
+        str = "WM_KILLFOCUS";
+        break;
+    case WM_DWMNCRENDERINGCHANGED:
+        str = "WM_DWMNCRENDERINGCHANGED";
+        break;
+    case WM_PARENTNOTIFY:
+        str = "WM_PARENTNOTIFY";
+        break;
+    case WM_NCMOUSEMOVE:
+        str = "WM_NCMOUSEMOVE";
+        break;
+    case WM_CREATE:
+        str = "WM_CREATE";
+        break;
+    case WM_NCCALCSIZE:
+        str = "WM_NCCALCSIZE";
+        break;
+    case WM_CHILDACTIVATE:
+        str = "WM_CHILDACTIVATE";
+        break;
+    case WM_IME_NOTIFY:
+        str = "WM_IME_NOTIFY";
+        break;
+    case WM_NCDESTROY:
+        str = "WM_NCDESTROY";
+        break;
+    case WM_MOVE:
+        str = "WM_MOVE";
+        break;
+    case WM_NCACTIVATE:
+        str = "WM_NCACTIVATE";
+        break;
+    case WM_DESTROY:
+        str = "WM_DESTROY";
+        break;
+    case WM_ACTIVATE:
+        str = "WM_ACTIVATE";
+        break;
+    default:
+        str = "???";
+        break;
+    }
+    return str;
+}
 
 bool Gui::GUIApplicationNativeEventAware::RawInputEventFilter(void* msg, long* result)
 {
+    if (gMouseInput == 0) {
+        Base::Console().Error("GUIApplicationNativeEventAware::RawInputEventFilter: internal error\n");
+    }
+    else {
+        MSG* message = (MSG*)(msg);
+        std::string eventType = getEventType(message->message);
+        Base::Console().Log("GUIApplicationNativeEventAware::RawInputEventFilter: Message type: 0x%04x (%s)\n",
+            message->message, eventType.c_str());
+    }
 	if (gMouseInput == 0) return false;
 
 	MSG* message = (MSG*)(msg);
@@ -559,6 +695,7 @@ void Gui::GUIApplicationNativeEventAware::On3dmouseInput()
 */
 void Gui::GUIApplicationNativeEventAware::OnRawInput(UINT nInputCode, HRAWINPUT hRawInput)
 {
+    Base::Console().Message("GUIApplicationNativeEventAware::OnRawInput: Handle raw input event\n");
 	const size_t cbSizeOfBuffer=1024;
 	BYTE pBuffer[cbSizeOfBuffer];
 
