@@ -52,7 +52,8 @@ class ShipWorkbench(Workbench):
                     "Ship_Hydrostatics"]
         weightslist = ["Ship_Weight",
                        "Ship_Tank",
-                       "Ship_Capacity"]
+                       "Ship_Capacity",
+                       "Ship_LoadCondition"]
         """
         weightslist = ["Ship_Weights",
                        "Ship_CreateTank",

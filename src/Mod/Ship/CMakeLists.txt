@@ -80,6 +80,11 @@ SET(ShipCapacityCurve_SRCS
 )
 SOURCE_GROUP("shipcapacitycurve" FILES ${ShipCapacityCurve_SRCS})
 
+SET(ShipCreateLoadCondition_SRCS
+        shipCreateLoadCondition/__init__.py
+)
+SOURCE_GROUP("shipcreateloadcondition" FILES ${ShipCreateLoadCondition_SRCS})
+
 SET(ShipUtils_SRCS
 	shipUtils/__init__.py
 	shipUtils/Locale.py
@@ -89,7 +94,7 @@ SET(ShipUtils_SRCS
 )
 SOURCE_GROUP("shiputils" FILES ${ShipUtils_SRCS})
 
-SET(all_files ${ShipMain_SRCS} ${ShipExamples_SRCS} ${ShipLoadExample_SRCS} ${ShipCreateShip_SRCS} ${ShipOutlineDraw_SRCS} ${ShipAreasCurve_SRCS} ${ShipHydrostatics_SRCS} ${ShipCreateWeight_SRCS} ${ShipCreateTank_SRCS} ${ShipCapacityCurve_SRCS} ${ShipUtils_SRCS})
+SET(all_files ${ShipMain_SRCS} ${ShipExamples_SRCS} ${ShipLoadExample_SRCS} ${ShipCreateShip_SRCS} ${ShipOutlineDraw_SRCS} ${ShipAreasCurve_SRCS} ${ShipHydrostatics_SRCS} ${ShipCreateWeight_SRCS} ${ShipCreateTank_SRCS} ${ShipCapacityCurve_SRCS} ${ShipCreateLoadCondition_SRCS} ${ShipUtils_SRCS})
 
 ADD_CUSTOM_TARGET(Ship ALL
     SOURCES ${all_files} ${Ship_QRC_SRCS}
@@ -155,6 +160,12 @@ INSTALL(
         ${ShipCapacityCurve_SRCS}
     DESTINATION
         Mod/Ship/shipCapacityCurve
+)
+INSTALL(
+    FILES
+        ${ShipCreateLoadCondition_SRCS}
+    DESTINATION
+        Mod/Ship/shipCreateLoadCondition
 )
 INSTALL(
     FILES

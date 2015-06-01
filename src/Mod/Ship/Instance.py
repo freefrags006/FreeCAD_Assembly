@@ -109,6 +109,15 @@ class Ship:
                         "Tanks",
                         "Ship",
                         tooltip).Tanks = []
+        tooltip = str(QtGui.QApplication.translate(
+            "Ship",
+            "Set of load conditions",
+            None,
+            QtGui.QApplication.UnicodeUTF8))
+        obj.addProperty("App::PropertyStringList",
+                        "LoadConditions",
+                        "Ship",
+                        tooltip).LoadConditions = []
 
         obj.Proxy = self
 
@@ -240,6 +249,16 @@ class ViewProviderShip:
                 objs.append(t_obj)
             except:
                 del obj.Tanks[i - bad_linked]
+                bad_linked += 1
+
+        # Claim the load conditions
+        bad_linked = 0
+        for i, l in enumerate(obj.LoadConditions):
+            try:
+                l_obj = FreeCAD.ActiveDocument.getObject(l)
+                objs.append(l_obj)
+            except:
+                del obj.LoadConditions[i - bad_linked]
                 bad_linked += 1
 
         return objs
