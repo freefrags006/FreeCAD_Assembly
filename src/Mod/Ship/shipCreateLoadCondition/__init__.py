@@ -74,6 +74,10 @@ def load():
                                        'LoadCondition')
 
     # Add a reference to the owner ship
+    s.mergeCells('A1:D1')
+    s.setAlignment('A1:A1', 'center', 'keep')
+    s.setStyle('A1:A1', 'bold', 'add')
+    s.setStyle('A1:A1', 'underline', 'add')
     s.set("A1", "SHIP")
     s.set("A2", "ship")
     s.set("A3", ship.Label)
@@ -82,6 +86,10 @@ def load():
     s.setForeground('A1:B3', (0.5,0.5,0.5))
 
     # Add the weights data
+    s.mergeCells('A4:D4')
+    s.setAlignment('A4:A4', 'center', 'keep')
+    s.setStyle('A4:A4', 'bold', 'add')
+    s.setStyle('A4:A4', 'underline', 'add')
     s.set("A4", "WEIGHTS")
     s.set("A5", "weight")
     s.set("B5", "internal ref")
@@ -89,17 +97,29 @@ def load():
         weight = App.activeDocument().getObject(ship.Weights[i])
         s.set("A{}".format(i + 6), weight.Label)
         s.set("B{}".format(i + 6), weight.Name)
-    s.setForeground('A3:B{}'.format(7 + len(ship.Weights)), (0.5,0.5,0.5))
+    s.setForeground('A4:B{}'.format(5 + len(ship.Weights)), (0.5,0.5,0.5))
 
     # Add the tanks data
+    s.mergeCells('A{0}:D{0}'.format(6 + len(ship.Weights)))
+    s.setAlignment('A{0}:A{0}'.format(6 + len(ship.Weights)), 'center', 'keep')
+    s.setStyle('A{0}:A{0}'.format(6 + len(ship.Weights)), 'bold', 'add')
+    s.setStyle('A{0}:A{0}'.format(6 + len(ship.Weights)), 'underline', 'add')
     s.set("A{}".format(6 + len(ship.Weights)), "TANKS")
     s.set("A{}".format(7 + len(ship.Weights)), "tank")
     s.set("B{}".format(7 + len(ship.Weights)), "internal ref")
+    s.set("C{}".format(7 + len(ship.Weights)), "Fluid density [kg/m^3]")
+    s.set("D{}".format(7 + len(ship.Weights)), "Filling ratio")
     for i in range(len(ship.Tanks)):
         tank = App.activeDocument().getObject(ship.Tanks[i])
         s.set("A{}".format(i + 8 + len(ship.Weights)), tank.Label)
         s.set("B{}".format(i + 8 + len(ship.Weights)), tank.Name)
-    s.setForeground('A3:B{}'.format(7 + len(ship.Weights) + len(ship.Tanks)), (0.5,0.5,0.5))
+        s.set("C{}".format(i + 8 + len(ship.Weights)), "998.0")
+        s.set("D{}".format(i + 8 + len(ship.Weights)), "0.0")
+    s.setForeground('A{0}:A{0}'.format(6 + len(ship.Weights)), (0.5,0.5,0.5))
+    s.setForeground('A{0}:D{0}'.format(7 + len(ship.Weights)), (0.5,0.5,0.5))
+    s.setForeground('A{}:B{}'.format(8 + len(ship.Weights),
+                                     8 + len(ship.Weights) + len(ship.Tanks)),
+                    (0.5,0.5,0.5))
 
     # Add the spreadsheet to the list of loading conditions of the ship
     lcs = ship.LoadConditions[:]
