@@ -37,6 +37,9 @@
 #include <Gui/ViewProvider.h>
 #include <Gui/Control.h>
 
+#include <Gui/QSint/actionpanel/taskgroup_p.h>
+#include <Gui/QSint/actionpanel/taskheader_p.h>
+
 using namespace Gui::TaskView;
 
 //**************************************************************************
@@ -61,7 +64,7 @@ TaskWidget::TaskWidget( QWidget *parent)
 TaskWidget::~TaskWidget()
 {
 }
-
+#if 0
 namespace Gui { namespace TaskView {
 class TaskIconLabel : public iisIconLabel {
 public:
@@ -80,16 +83,18 @@ public:
 };
 }
 }
-
+#endif
 //**************************************************************************
 //**************************************************************************
 // TaskBox
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 TaskBox::TaskBox(const QPixmap &icon, const QString &title, bool expandable, QWidget *parent)
-    : iisTaskBox(icon, title, expandable, parent), wasShown(false)
+    : QSint::ActionGroup(icon, title, expandable, parent), wasShown(false)
 {
+#if 0
     setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
+#endif
 }
 
 TaskBox::~TaskBox()
@@ -103,6 +108,7 @@ void TaskBox::showEvent(QShowEvent*)
 
 void TaskBox::hideGroupBox()
 {
+#if 0
     if (!wasShown) {
         // get approximate height
         int h=0;
@@ -141,6 +147,7 @@ void TaskBox::hideGroupBox()
     m_foldPixmap = QPixmap();
     setFixedHeight(myHeader->height());
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+#endif
 }
 
 bool TaskBox::isGroupVisible() const
@@ -150,6 +157,7 @@ bool TaskBox::isGroupVisible() const
 
 void TaskBox::actionEvent (QActionEvent* e)
 {
+#if 0
     QAction *action = e->action();
     switch (e->type()) {
     case QEvent::ActionAdded:
@@ -179,6 +187,9 @@ void TaskBox::actionEvent (QActionEvent* e)
     default:
         break;
     }
+#else
+    QSint::ActionGroup::actionEvent(e);
+#endif
 }
 
 
@@ -193,8 +204,13 @@ TaskView::TaskView(QWidget *parent)
     //addWidget(new TaskEditControl(this));
     //addWidget(new TaskAppearance(this));
     //addStretch();
-    taskPanel = new iisTaskPanel(this);
-    taskPanel->setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
+    taskPanel = new QSint::ActionPanel(this);
+    QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    sizePolicy.setHorizontalStretch(0);
+    sizePolicy.setVerticalStretch(0);
+    sizePolicy.setHeightForWidth(taskPanel->sizePolicy().hasHeightForWidth());
+    taskPanel->setSizePolicy(sizePolicy);
+    //taskPanel->setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
     this->setWidget(taskPanel);
     setWidgetResizable(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -372,7 +388,9 @@ void TaskView::showDialog(TaskDialog *dlg)
 void TaskView::removeDialog(void)
 {
     if (ActiveCtrl) {
+#if 0
         taskPanel->removeWidget(ActiveCtrl);
+#endif
         delete ActiveCtrl;
         ActiveCtrl = 0;
     }
@@ -380,14 +398,16 @@ void TaskView::removeDialog(void)
     if (ActiveDialog) {
         const std::vector<QWidget*> &cont = ActiveDialog->getDialogContent();
         for(std::vector<QWidget*>::const_iterator it=cont.begin();it!=cont.end();++it){
+#if 0
             taskPanel->removeWidget(*it);
+#endif
         }
         delete ActiveDialog;
         ActiveDialog = 0;
     }
-
+#if 0
     taskPanel->removeStretch();
-
+#endif
     // put the watcher back in control
     addTaskWatcher();
 }
@@ -448,11 +468,14 @@ void TaskView::removeTaskWatcher(void)
         std::vector<QWidget*> &cont = (*it)->getWatcherContent();
         for (std::vector<QWidget*>::iterator it2=cont.begin();it2!=cont.end();++it2) {
             (*it2)->hide();
+#if 0
             taskPanel->removeWidget(*it2);
+#endif
         }
     }
-
+#if 0
     taskPanel->removeStretch();
+#endif
 }
 
 void TaskView::accept()

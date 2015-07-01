@@ -28,8 +28,9 @@
 #include <string>
 #include <vector>
 #include <boost/signals.hpp>
+#include <QScrollArea>
 
-#include <Gui/iisTaskPanel/include/iisTaskPanel>
+#include <Gui/QSint/include/QSint>
 #include <Gui/Selection.h>
 #include "TaskWatcher.h"
 
@@ -58,7 +59,7 @@ public:
 };
 
 /// Father class of content with header and Icon
-class GuiExport TaskBox : public iisTaskBox, public TaskContent
+class GuiExport TaskBox : public QSint::ActionGroup, public TaskContent
 {
     Q_OBJECT
 
@@ -133,7 +134,7 @@ protected:
 
     std::vector<TaskWatcher*> ActiveWatcher;
 
-    iisTaskPanel* taskPanel;
+    QSint::ActionPanel* taskPanel;
     TaskDialog *ActiveDialog;
     TaskEditControl *ActiveCtrl;
 
