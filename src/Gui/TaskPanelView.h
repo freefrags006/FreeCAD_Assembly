@@ -31,6 +31,54 @@
 namespace Gui {
 namespace DockWnd {
 
+namespace Ui {
+    class MainWindow;
+    class MainWindow2;
+}
+
+class MainWindow1 : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow1(QWidget *parent = 0);
+    ~MainWindow1();
+
+protected:
+    void changeEvent(QEvent *e);
+
+protected Q_SLOTS:
+    void executeAction();
+
+private:
+    Ui::MainWindow *ui;
+};
+
+class MainWindow2 : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow2(QWidget *parent = 0);
+    ~MainWindow2();
+
+protected:
+    void changeEvent(QEvent *e);
+
+protected Q_SLOTS:
+    void executeAction();
+
+    void on_rbDefaultScheme_toggled(bool);
+    void on_rbXPBlueScheme_toggled(bool);
+    void on_rbXPBlue2Scheme_toggled(bool);
+    void on_rbVistaScheme_toggled(bool);
+    void on_rbMacScheme_toggled(bool);
+    void on_rbAndroidScheme_toggled(bool);
+
+private:
+    Ui::MainWindow2 *ui;
+};
+
 /** A test class. A more elaborate class description.
  */
 class TaskPanelView : public Gui::DockWindow, public Gui::SelectionSingleton::ObserverType

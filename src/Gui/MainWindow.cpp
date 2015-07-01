@@ -324,7 +324,7 @@ MainWindow::MainWindow(QWidget * parent, Qt::WFlags f)
     QString home = Gui::Dialog::DlgOnlineHelpImp::getStartpage();
     HelpView* pcHelpView = new HelpView( home, this );
     pDockMgr->registerDockWindow("Std_HelpView", pcHelpView);
-
+#else
     // TaskPanel view
     TaskPanelView* pcTaskPanelView = new TaskPanelView(0, this);
     pcTaskPanelView->setObjectName
