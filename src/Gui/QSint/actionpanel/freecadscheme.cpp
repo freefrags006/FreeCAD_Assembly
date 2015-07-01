@@ -134,6 +134,7 @@ void FreeCADPanelScheme::restoreActionStyle()
 {
     actionStyle = builtinScheme;
 }
+
 QPixmap FreeCADPanelScheme::drawFoldIcon(const QPalette& p) const
 {
     QImage img(17,17,QImage::Format_ARGB32_Premultiplied);
