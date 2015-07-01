@@ -39,6 +39,7 @@
 
 #include <Gui/QSint/actionpanel/taskgroup_p.h>
 #include <Gui/QSint/actionpanel/taskheader_p.h>
+#include <Gui/QSint/actionpanel/freecadscheme.h>
 
 using namespace Gui::TaskView;
 
@@ -73,25 +74,16 @@ TaskWidget::~TaskWidget()
 TaskBox::TaskBox(QWidget *parent)
   : QSint::ActionGroup(parent), wasShown(false)
 {
-#if 0
-    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
-#endif
 }
 
 TaskBox::TaskBox(const QString &title, bool expandable, QWidget *parent)
   : QSint::ActionGroup(title, expandable, parent), wasShown(false)
 {
-#if 0
-    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
-#endif
 }
 
 TaskBox::TaskBox(const QPixmap &icon, const QString &title, bool expandable, QWidget *parent)
   : QSint::ActionGroup(icon, title, expandable, parent), wasShown(false)
 {
-#if 0
-    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
-#endif
 }
 
 TaskBox::~TaskBox()
@@ -201,7 +193,7 @@ TaskView::TaskView(QWidget *parent)
     sizePolicy.setVerticalStretch(0);
     sizePolicy.setHeightForWidth(taskPanel->sizePolicy().hasHeightForWidth());
     taskPanel->setSizePolicy(sizePolicy);
-    //taskPanel->setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
+    taskPanel->setScheme(QSint::FreeCADPanelScheme::defaultScheme());
     this->setWidget(taskPanel);
     setWidgetResizable(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -367,6 +359,8 @@ void TaskView::showDialog(TaskDialog *dlg)
         taskPanel->addWidget(ActiveCtrl);
     }
 
+    taskPanel->setScheme(QSint::FreeCADPanelScheme::defaultScheme());
+
     if (!dlg->needsFullSpace())
         taskPanel->addStretch();
 
@@ -446,6 +440,8 @@ void TaskView::addTaskWatcher(void)
     if (!ActiveWatcher.empty())
         taskPanel->addStretch();
     updateWatcher();
+
+    taskPanel->setScheme(QSint::FreeCADPanelScheme::defaultScheme());
 }
 
 void TaskView::removeTaskWatcher(void)
