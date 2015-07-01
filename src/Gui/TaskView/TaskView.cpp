@@ -64,26 +64,7 @@ TaskWidget::TaskWidget( QWidget *parent)
 TaskWidget::~TaskWidget()
 {
 }
-#if 0
-namespace Gui { namespace TaskView {
-class TaskIconLabel : public iisIconLabel {
-public:
-    TaskIconLabel(const QIcon &icon, 
-                  const QString &title,
-                  QWidget *parent = 0)
-      : iisIconLabel(icon, title, parent) {
-          // do not allow to get the focus because when hiding the task box
-          // it could cause to activate another MDI view.
-          setFocusPolicy(Qt::NoFocus);
-    }
-    void setTitle(const QString &text) {
-        myText = text;
-        update();
-    }
-};
-}
-}
-#endif
+
 //**************************************************************************
 //**************************************************************************
 // TaskBox
@@ -108,7 +89,6 @@ void TaskBox::showEvent(QShowEvent*)
 
 void TaskBox::hideGroupBox()
 {
-#if 0
     if (!wasShown) {
         // get approximate height
         int h=0;
@@ -147,7 +127,6 @@ void TaskBox::hideGroupBox()
     m_foldPixmap = QPixmap();
     setFixedHeight(myHeader->height());
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-#endif
 }
 
 bool TaskBox::isGroupVisible() const
@@ -157,26 +136,25 @@ bool TaskBox::isGroupVisible() const
 
 void TaskBox::actionEvent (QActionEvent* e)
 {
-#if 0
     QAction *action = e->action();
     switch (e->type()) {
     case QEvent::ActionAdded:
         {
-            TaskIconLabel *label = new TaskIconLabel(
-                action->icon(), action->text(), this);
-            this->addIconLabel(label);
-            connect(label,SIGNAL(clicked()),action,SIGNAL(triggered()));
+            QSint::ActionLabel *label = new QSint::ActionLabel(action, this);
+            this->addActionLabel(label, true, false);
             break;
         }
     case QEvent::ActionChanged:
         {
             // update label when action changes
+#if 0 // not needed?
             QBoxLayout* bl = myGroup->groupLayout();
             int index = this->actions().indexOf(action);
             if (index < 0) break;
             QWidgetItem* item = static_cast<QWidgetItem*>(bl->itemAt(index));
-            TaskIconLabel* label = static_cast<TaskIconLabel*>(item->widget());
-            label->setTitle(action->text());
+            QSint::ActionLabel* label = qobject_cast<QSint::ActionLabel*>(item->widget());
+            label->setText(action->text());
+#endif
             break;
         }
     case QEvent::ActionRemoved:
@@ -187,9 +165,6 @@ void TaskBox::actionEvent (QActionEvent* e)
     default:
         break;
     }
-#else
-    QSint::ActionGroup::actionEvent(e);
-#endif
 }
 
 
@@ -388,9 +363,7 @@ void TaskView::showDialog(TaskDialog *dlg)
 void TaskView::removeDialog(void)
 {
     if (ActiveCtrl) {
-#if 0
         taskPanel->removeWidget(ActiveCtrl);
-#endif
         delete ActiveCtrl;
         ActiveCtrl = 0;
     }
@@ -398,16 +371,14 @@ void TaskView::removeDialog(void)
     if (ActiveDialog) {
         const std::vector<QWidget*> &cont = ActiveDialog->getDialogContent();
         for(std::vector<QWidget*>::const_iterator it=cont.begin();it!=cont.end();++it){
-#if 0
             taskPanel->removeWidget(*it);
-#endif
         }
         delete ActiveDialog;
         ActiveDialog = 0;
     }
-#if 0
+
     taskPanel->removeStretch();
-#endif
+
     // put the watcher back in control
     addTaskWatcher();
 }
@@ -468,14 +439,11 @@ void TaskView::removeTaskWatcher(void)
         std::vector<QWidget*> &cont = (*it)->getWatcherContent();
         for (std::vector<QWidget*>::iterator it2=cont.begin();it2!=cont.end();++it2) {
             (*it2)->hide();
-#if 0
             taskPanel->removeWidget(*it2);
-#endif
         }
     }
-#if 0
+
     taskPanel->removeStretch();
-#endif
 }
 
 void TaskView::accept()
