@@ -149,7 +149,7 @@ TaskSmoothing::TaskSmoothing()
 
     selection = new Selection();
     selection->setObjects(Gui::Selection().getSelectionEx(0, Mesh::Feature::getClassTypeId()));
-    Gui::TaskView::TaskGroup* tasksel = new Gui::TaskView::TaskGroup();
+    Gui::TaskView::TaskBox* tasksel = new Gui::TaskView::TaskBox(QPixmap(), QString(), false, 0);
     tasksel->groupLayout()->addWidget(selection);
     tasksel->hide();
     Content.push_back(tasksel);

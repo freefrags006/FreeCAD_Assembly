@@ -57,18 +57,6 @@ public:
     //~TaskContent();
 };
 
-class GuiExport TaskGroup : public iisTaskGroup, public TaskContent
-{
-    Q_OBJECT
-
-public:
-    TaskGroup(QWidget *parent = 0);
-    ~TaskGroup();
-
-protected:
-    void actionEvent (QActionEvent*);
-};
-
 /// Father class of content with header and Icon
 class GuiExport TaskBox : public iisTaskBox, public TaskContent
 {

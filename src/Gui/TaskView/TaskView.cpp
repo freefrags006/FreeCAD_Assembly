@@ -62,21 +62,6 @@ TaskWidget::~TaskWidget()
 {
 }
 
-//**************************************************************************
-//**************************************************************************
-// TaskGroup
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-TaskGroup::TaskGroup(QWidget *parent)
-    : iisTaskGroup(parent, false)
-{
-    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
-}
-
-TaskGroup::~TaskGroup()
-{
-}
-
 namespace Gui { namespace TaskView {
 class TaskIconLabel : public iisIconLabel {
 public:
@@ -94,39 +79,6 @@ public:
     }
 };
 }
-}
-
-void TaskGroup::actionEvent (QActionEvent* e)
-{
-    QAction *action = e->action();
-    switch (e->type()) {
-    case QEvent::ActionAdded:
-        {
-            TaskIconLabel *label = new TaskIconLabel(
-                action->icon(), action->text(), this);
-            this->addIconLabel(label);
-            connect(label,SIGNAL(clicked()),action,SIGNAL(triggered()));
-            break;
-        }
-    case QEvent::ActionChanged:
-        {
-            // update label when action changes
-            QBoxLayout* bl = this->groupLayout();
-            int index = this->actions().indexOf(action);
-            if (index < 0) break;
-            QWidgetItem* item = static_cast<QWidgetItem*>(bl->itemAt(index));
-            TaskIconLabel* label = static_cast<TaskIconLabel*>(item->widget());
-            label->setTitle(action->text());
-            break;
-        }
-    case QEvent::ActionRemoved:
-        {
-            // cannot change anything
-            break;
-        }
-    default:
-        break;
-    }
 }
 
 //**************************************************************************
