@@ -70,8 +70,24 @@ TaskWidget::~TaskWidget()
 // TaskBox
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+TaskBox::TaskBox(QWidget *parent)
+  : QSint::ActionGroup(parent), wasShown(false)
+{
+#if 0
+    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
+#endif
+}
+
+TaskBox::TaskBox(const QString &title, bool expandable, QWidget *parent)
+  : QSint::ActionGroup(title, expandable, parent), wasShown(false)
+{
+#if 0
+    setScheme(iisFreeCADTaskPanelScheme::defaultScheme());
+#endif
+}
+
 TaskBox::TaskBox(const QPixmap &icon, const QString &title, bool expandable, QWidget *parent)
-    : QSint::ActionGroup(icon, title, expandable, parent), wasShown(false)
+  : QSint::ActionGroup(icon, title, expandable, parent), wasShown(false)
 {
 #if 0
     setScheme(iisFreeCADTaskPanelScheme::defaultScheme());

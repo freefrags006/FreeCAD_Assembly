@@ -64,7 +64,28 @@ class GuiExport TaskBox : public QSint::ActionGroup, public TaskContent
     Q_OBJECT
 
 public:
-    TaskBox(const QPixmap &icon, const QString &title, bool expandable, QWidget *parent);
+    /** Constructor. Creates TaskBox without header.
+      */
+    explicit TaskBox(QWidget *parent = 0);
+
+    /** Constructor. Creates TaskBox with header's
+        text set to \a title, but with no icon.
+
+        If \a expandable set to \a true (default), the group can be expanded/collapsed by the user.
+      */
+    explicit TaskBox(const QString& title,
+                     bool expandable = true,
+                     QWidget *parent = 0);
+
+    /** Constructor. Creates TaskBox with header's
+        text set to \a title and icon set to \a icon.
+
+        If \a expandable set to \a true (default), the group can be expanded/collapsed by the user.
+      */
+    explicit TaskBox(const QPixmap& icon,
+                     const QString& title,
+                     bool expandable = true,
+                     QWidget *parent = 0);
     ~TaskBox();
     void hideGroupBox();
     bool isGroupVisible() const;
